@@ -8,7 +8,8 @@
         "php": "^8.2",
         "october/rain": "^4.0",
         "laravel/framework": "^12.0",
-        "october/all": "^4.0"
+        "october/all": "^4.0",
+        "predis/predis": "^3.2"
     },
     "require-dev": {
         "phpunit/phpunit": "^8.5|^9.0",
