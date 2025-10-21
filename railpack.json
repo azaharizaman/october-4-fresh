@@ -4,7 +4,8 @@
   "buildAptPackages": [
     "git",
     "curl",
-    "unzip"
+    "unzip",
+    "zip"
   ],
   "packages": {
     "node": "20"
@@ -20,25 +21,7 @@
     }
   },
   "steps": {
-    "install": {
-      "caches": ["composer", "npm"],
-      "commands": [
-        {
-          "cmd": "composer install --no-dev --optimize-autoloader --no-interaction",
-          "customName": "Install PHP dependencies"
-        },
-        {
-          "cmd": "npm ci --only=production",
-          "customName": "Install Node.js dependencies"
-        }
-      ]
-    },
     "build": {
-      "inputs": [
-        {
-          "step": "install"
-        }
-      ],
       "caches": ["npm"],
       "commands": [
         {
