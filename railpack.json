@@ -24,7 +24,7 @@
     "install:composer": {
       "commands": [
         {
-          "cmd": "composer config http-basic.gateway.octobercms.com \"$COMPOSER_HTTP_BASIC_GATEWAY_OCTOBERCMS_COM_USERNAME\" \"$COMPOSER_HTTP_BASIC_GATEWAY_OCTOBERCMS_COM_PASSWORD\"",
+          "cmd": "composer config -vvv http-basic.gateway.octobercms.com \"$COMPOSER_HTTP_BASIC_GATEWAY_OCTOBERCMS_COM_USERNAME\" \"$COMPOSER_HTTP_BASIC_GATEWAY_OCTOBERCMS_COM_PASSWORD\"",
           "customName": "Configure OctoberCMS composer auth"
         },
         "..."
