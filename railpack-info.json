@@ -1,0 +1,58 @@
+{
+  "railpackVersion": "0.9.0",
+  "resolvedPackages": {
+    "node": {
+      "name": "node",
+      "requestedVersion": "20",
+      "resolvedVersion": "20.19.5",
+      "source": "custom config"
+    },
+    "php": {
+      "name": "php",
+      "requestedVersion": "8.2",
+      "resolvedVersion": "8.2.29",
+      "source": "composer.json \u003e require \u003e php"
+    }
+  },
+  "metadata": {
+    "providers": "php"
+  },
+  "detectedProviders": [
+    "php"
+  ],
+  "logs": [
+    {
+      "Level": "info",
+      "Msg": "Using config file `railpack.json`"
+    },
+    {
+      "Level": "warn",
+      "Msg": "The config file format is not yet finalized and subject to change."
+    },
+    {
+      "Level": "info",
+      "Msg": "Using provider Php from config"
+    },
+    {
+      "Level": "info",
+      "Msg": "Found Laravel app"
+    },
+    {
+      "Level": "info",
+      "Msg": "Installing Node"
+    },
+    {
+      "Level": "warn",
+      "Msg": "node_modules directory found in project root, this is likely a mistake"
+    },
+    {
+      "Level": "warn",
+      "Msg": "It is recommended to add node_modules to the .gitignore file"
+    },
+    {
+      "Level": "info",
+      "Msg": "Pruning node dependencies"
+    }
+  ],
+  "success": true
+}
