@@ -10,15 +10,11 @@
       "type": "locked"
     },
     "composer": {
-      "directory": "/root/.composer/cache",
+      "directory": "/opt/cache/composer",
       "type": "shared"
     },
     "node-modules": {
       "directory": "/app/node_modules/.cache",
-      "type": "shared"
-    },
-    "npm": {
-      "directory": "/root/.npm",
       "type": "shared"
     },
     "npm-install": {
@@ -32,68 +28,27 @@
     },
     "inputs": [
       {
+        "include": [
+          "/app/node_modules"
+        ],
+        "step": "prune:node"
+      },
+      {
         "exclude": [
-          "node_modules",
-          ".git",
-          ".env.example",
-          "tests",
-          "phpunit.xml",
-          "phpcs.xml",
-          "README.md",
-          "CHANGELOG.md"
+          "node_modules"
         ],
         "include": [
           "."
         ],
         "step": "build"
-      },
-      {
-        "include": [
-          "."
-        ],
-        "step": "build"
-      },
-      {
-        "include": [
-          "."
-        ],
-        "step": "install:composer"
       }
     ],
-    "startCommand": "php artisan serve --host=0.0.0.0 --port=$PORT",
-    "variables": {
-      "APP_DEBUG": "false",
-      "APP_ENV": "production",
-      "CACHE_STORE": "redis",
-      "CMS_ASSET_CACHE": "true",
-      "CMS_ROUTE_CACHE": "true",
-      "LOG_CHANNEL": "stderr",
-      "QUEUE_CONNECTION": "redis",
-      "SESSION_DRIVER": "redis"
-    }
+    "startCommand": "/start-container.sh"
   },
   "steps": [
     {
-      "caches": [
-        "apt",
-        "apt-lists"
-      ],
-      "commands": [
-        {
-          "cmd": "sh -c 'apt-get update \u0026\u0026 apt-get install -y curl git unzip zip'",
-          "customName": "install apt packages: curl git unzip zip"
-        }
-      ],
-      "inputs": [
-        {
-          "image": "ghcr.io/railwayapp/railpack-builder:latest"
-        }
-      ],
-      "name": "packages:apt:build"
-    },
-    {
       "assets": {
-        "mise.toml": "[tools]\n  [tools.node]\n    version = \"20.19.5\"\n"
+        "mise.toml": "[tools]\n  [tools.node]\n    version = \"22.21.0\"\n"
       },
       "commands": [
         {
@@ -111,7 +66,7 @@
       ],
       "inputs": [
         {
-          "step": "packages:apt:build"
+          "image": "ghcr.io/railwayapp/railpack-builder:latest"
         }
       ],
       "name": "packages:mise",
@@ -127,8 +82,8 @@
     {
       "commands": [
         {
-          "cmd": "sh -c 'apt-get update \u0026\u0026 apt-get install -y ca-certificates curl git unzip zip'",
-          "customName": "install apt packages: ca-certificates curl git unzip zip"
+          "cmd": "sh -c 'apt-get update \u0026\u0026 apt-get install -y ca-certificates git unzip zip'",
+          "customName": "install apt packages: ca-certificates git unzip zip"
         }
       ],
       "inputs": [
@@ -1000,11 +955,7 @@
           "src": "artisan"
         },
         {
-          "cmd": "composer config -vvv http-basic.gateway.octobercms.com \"$COMPOSER_HTTP_BASIC_GATEWAY_OCTOBERCMS_COM_USERNAME\" \"$COMPOSER_HTTP_BASIC_GATEWAY_OCTOBERCMS_COM_PASSWORD\"",
-          "customName": "Configure OctoberCMS composer auth"
-        },
-        {
-          "cmd": "composer install --optimize-autoloader --no-scripts --no-interaction"
+          "cmd": "COMPOSER_ALLOW_SUPERUSER=1 composer install --optimize-autoloader --no-scripts --no-interaction"
         }
       ],
       "inputs": [
@@ -1073,24 +1024,46 @@
     },
     {
       "caches": [
-        "npm"
+        "npm-install"
       ],
       "commands": [
         {
-          "cmd": "npm run build",
-          "customName": "Build frontend assets"
+          "cmd": "npm prune --omit=dev --ignore-scripts"
+        }
+      ],
+      "inputs": [
+        {
+          "step": "install:node"
+        }
+      ],
+      "name": "prune:node",
+      "variables": {
+        "NPM_CONFIG_PRODUCTION": "true"
+      }
+    },
+    {
+      "caches": [
+        "node-modules"
+      ],
+      "commands": [
+        {
+          "cmd": "npm run build"
         },
         {
-          "cmd": "php artisan config:cache",
-          "customName": "Cache configuration"
+          "cmd": "sh -c 'mkdir -p storage/framework/{sessions,views,cache,testing} storage/logs bootstrap/cache \u0026\u0026 chmod -R a+rw storage'",
+          "customName": "mkdir -p storage/framework/{sessions,views,cache,testing} storage/logs bootstrap/cache \u0026\u0026 chmod -R a+rw storage"
         },
         {
-          "cmd": "php artisan route:cache",
-          "customName": "Cache routes"
+          "cmd": "php artisan config:cache"
         },
         {
-          "cmd": "php artisan view:cache",
-          "customName": "Cache views"
+          "cmd": "php artisan event:cache"
+        },
+        {
+          "cmd": "php artisan route:cache"
+        },
+        {
+          "cmd": "php artisan view:cache"
         }
       ],
       "inputs": [
