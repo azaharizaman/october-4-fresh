@@ -51,11 +51,11 @@
     },
     "minimum-stability": "stable",
     "prefer-stable": true,
-    "repositories": {
-        "octobercms": {
-            "type": "composer",
-            "url": "https://gateway.octobercms.com",
-            "only": ["october/*", "*-plugin", "*-theme"]
+        "repositories": {
+            "octobercms": {
+                "type": "composer",
+                "url": "https://gateway.octobercms.com",
+                "only": ["october/*", "*-plugin", "*-theme"]
+            }
         }
     }
-}
