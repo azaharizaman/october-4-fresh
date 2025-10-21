@@ -1,5 +1,6 @@
 {
   "$schema": "https://schema.railpack.com",
+  "provider": "php",
   "buildAptPackages": [
     "git",
     "curl",
@@ -21,12 +22,6 @@
   },
   "steps": {
     "install": {
-      "inputs": [
-        {
-          "local": true,
-          "include": ["."]
-        }
-      ],
       "caches": ["composer", "npm"],
       "commands": [
         {
