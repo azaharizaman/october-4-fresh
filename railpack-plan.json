@@ -1,0 +1,89 @@
+{
+  "$schema": "https://schema.railpack.com",
+  "provider": "php",
+  "buildAptPackages": [
+    "git",
+    "curl",
+    "unzip",
+    "zip"
+  ],
+  "packages": {
+    "node": "20"
+  },
+  "caches": {
+    "composer": {
+      "directory": "/root/.composer/cache",
+      "type": "shared"
+    },
+    "npm": {
+      "directory": "/root/.npm",
+      "type": "shared"
+    }
+  },
+  "secrets": ["COMPOSER_ALLOW_SUPERUSER"],
+  "steps": {
+    "install:composer": {
+      "secrets": ["COMPOSER_ALLOW_SUPERUSER"],
+      "commands": [
+        "...",
+        {
+          "cmd": "composer config -vvv http-basic.gateway.octobercms.com \"$COMPOSER_HTTP_BASIC_GATEWAY_OCTOBERCMS_COM_USERNAME\" \"$COMPOSER_HTTP_BASIC_GATEWAY_OCTOBERCMS_COM_PASSWORD\"",
+          "customName": "Configure OctoberCMS composer auth"
+        }
+      ]
+    },
+    "build": {
+      "caches": ["npm"],
+      "commands": [
+        {
+          "cmd": "npm run build",
+          "customName": "Build frontend assets"
+        },
+        {
+          "cmd": "php artisan config:cache",
+          "customName": "Cache configuration"
+        },
+        {
+          "cmd": "php artisan route:cache",
+          "customName": "Cache routes"
+        },
+        {
+          "cmd": "php artisan view:cache",
+          "customName": "Cache views"
+        }
+      ]
+    }
+  },
+  "deploy": {
+    "base": {
+      "image": "ghcr.io/railwayapp/railpack-runtime:latest"
+    },
+    "inputs": [
+      {
+        "step": "build",
+        "include": ["."],
+        "exclude": [
+          "node_modules",
+          ".git",
+          ".env.example",
+          "tests",
+          "phpunit.xml",
+          "phpcs.xml",
+          "README.md",
+          "CHANGELOG.md"
+        ]
+      }
+    ],
+    "startCommand": "php artisan serve --host=0.0.0.0 --port=$PORT",
+    "variables": {
+      "APP_ENV": "production",
+      "APP_DEBUG": "false",
+      "CMS_ROUTE_CACHE": "true",
+      "CMS_ASSET_CACHE": "true",
+      "CACHE_STORE": "redis",
+      "SESSION_DRIVER": "redis",
+      "QUEUE_CONNECTION": "redis",
+      "LOG_CHANNEL": "stderr"
+    }
+  }
+}
