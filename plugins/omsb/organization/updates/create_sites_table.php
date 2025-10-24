@@ -17,35 +17,38 @@ return new class extends Migration
     public function up()
     {
         Schema::create('omsb_organization_sites', function(Blueprint $table) {
+            $table->engine = 'InnoDB';
+            
             $table->id();
-            $table->string('code')->unique('idx_sites_code_unique');
+            $table->string('code')->unique();
             $table->string('name');
             $table->string('tel_no')->nullable();
             $table->string('fax_no')->nullable();
-            
-            // Foreign keys
-            $table->foreignId('parent_id')
-                ->nullable()
-                ->constrained('omsb_organization_sites')
-                ->nullOnDelete()
-                ->index('idx_sites_parent_id');
-                
-            $table->foreignId('company_id')
-                ->nullable()
-                ->constrained('omsb_organization_companies')
-                ->nullOnDelete()
-                ->index('idx_sites_company_id');
-                
-            $table->foreignId('address_id')
-                ->nullable()
-                ->constrained('omsb_organization_addresses')
-                ->nullOnDelete()
-                ->index('idx_sites_address_id');
-            
-            $table->string('type')->default('Branch')->index('idx_sites_type');
+            $table->string('type')->default('Branch');
             $table->timestamps();
             $table->softDeletes();
             
+            // Foreign key - Parent site (self-referencing)
+            $table->foreignId('parent_id')
+                ->nullable()
+                ->constrained('omsb_organization_sites')
+                ->nullOnDelete();
+            
+            // Foreign key - Company relationship
+            $table->foreignId('company_id')
+                ->nullable()
+                ->constrained('omsb_organization_companies')
+                ->cascadeOnDelete();
+            
+            // Foreign key - Address relationship
+            $table->foreignId('address_id')
+                ->nullable()
+                ->constrained('omsb_organization_addresses')
+                ->nullOnDelete();
+            
+            // Indexes
+            $table->index('code', 'idx_sites_code');
+            $table->index('type', 'idx_sites_type');
             $table->index('deleted_at', 'idx_sites_deleted_at');
         });
     }

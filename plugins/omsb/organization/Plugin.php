@@ -74,10 +74,24 @@ class Plugin extends PluginBase
         return [
             'organization' => [
                 'label' => 'Organization',
-                'url' => Backend::url('omsb/organization/SiteController'),
-                'icon' => 'icon-leaf',
+                'url' => Backend::url('omsb/organization/companies'),
+                'icon' => 'icon-building',
                 'permissions' => ['omsb.organization.*'],
                 'order' => 500,
+                'sideMenu' => [
+                    'companies' => [
+                        'label' => 'Companies',
+                        'url' => Backend::url('omsb/organization/companies'),
+                        'icon' => 'icon-briefcase',
+                        'permissions' => ['omsb.organization.companies']
+                    ],
+                    'sites' => [
+                        'label' => 'Sites',
+                        'url' => Backend::url('omsb/organization/sitecontroller'),
+                        'icon' => 'icon-map-marker',
+                        'permissions' => ['omsb.organization.sitecontroller']
+                    ]
+                ]
             ],
         ];
     }

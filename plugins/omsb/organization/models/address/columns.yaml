@@ -6,3 +6,35 @@ columns:
     id:
         label: ID
         searchable: true
+        sortable: true
+        width: 80
+        
+    address_street:
+        label: Street
+        searchable: true
+        sortable: true
+        
+    address_city:
+        label: City
+        searchable: true
+        sortable: true
+        
+    address_state:
+        label: State
+        searchable: true
+        sortable: true
+        
+    address_postcode:
+        label: Postcode
+        searchable: true
+        sortable: true
+        
+    address_country:
+        label: Country
+        searchable: true
+        sortable: true
+        
+    region:
+        label: Region
+        searchable: true
+        sortable: true

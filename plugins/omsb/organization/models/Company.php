@@ -18,9 +18,32 @@ class Company extends Model
     public $table = 'omsb_organization_companies';
 
     /**
+     * @var array fillable fields
+     */
+    protected $fillable = [
+        'code',
+        'name',
+        'logo',
+        'parent_id'
+    ];
+
+    /**
      * @var array rules for validation
      */
-    public $rules = [];
+    public $rules = [
+        'code' => 'required|unique:omsb_organization_companies,code',
+        'name' => 'required|min:3',
+    ];
+
+    /**
+     * @var array custom validation messages
+     */
+    public $customMessages = [
+        'code.required' => 'Company code is required',
+        'code.unique' => 'Company code must be unique',
+        'name.required' => 'Company name is required',
+        'name.min' => 'Company name must be at least 3 characters',
+    ];
 
     /**
      * @var array dates used by the model
@@ -28,4 +51,80 @@ class Company extends Model
     protected $dates = [
         'deleted_at'
     ];
+
+    /**
+     * @var array belongsTo relationships
+     */
+    public $belongsTo = [
+        'parent' => [
+            Company::class,
+            'key' => 'parent_id'
+        ]
+    ];
+
+    /**
+     * @var array hasMany relationships
+     */
+    public $hasMany = [
+        'children' => [
+            Company::class,
+            'key' => 'parent_id'
+        ],
+        'addresses' => [
+            Address::class,
+            'key' => 'company_id'
+        ],
+        'sites' => [
+            Site::class,
+            'key' => 'company_id'
+        ]
+    ];
+
+    public $attachOne = [
+        'logo' => [
+            \System\Models\File::class
+        ]
+    ];
+    
+    // Helper methods
+    public function getPrimaryAddress()
+    {
+        return $this->addresses()->where('is_primary', true)->first();
+    }
+    
+    public function getMailingAddress()
+    {
+        return $this->addresses()->where('is_mailing', true)->first();
+    }
+    
+    public function getReceivingAddresses()
+    {
+        return $this->addresses()->where('is_receiving_goods', true)->where('is_active', true)->get();
+    }
+    
+    
+
+    /**
+     * Get the display name for the company
+     */
+    public function getDisplayNameAttribute(): string
+    {
+        return $this->code . ' - ' . $this->name;
+    }
+
+    /**
+     * Options for parent company dropdown
+     */
+    public function getParentIdOptions(): array
+    {
+        // Exclude self and children to prevent circular references
+        return self::where('id', '!=', $this->id ?? 0)
+            ->whereNull('deleted_at')
+            ->orderBy('name')
+            ->get()
+            ->pluck('display_name', 'id')
+            ->all();
+    }
+
+
 }

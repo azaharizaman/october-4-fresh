@@ -1,0 +1,43 @@
+# ===================================
+#  Relation Behavior Config
+# ===================================
+
+# Addresses Relation
+addresses:
+    label: Addresses
+    view:
+        list: $/omsb/organization/models/address/columns.yaml
+        toolbarButtons: create|delete
+        showSearch: true
+        showSorting: true
+        recordsPerPage: 10
+    manage:
+        form: $/omsb/organization/models/address/fields.yaml
+        recordsPerPage: 10
+    
+# Sites Relation
+sites:
+    label: Sites
+    view:
+        list: $/omsb/organization/models/site/columns.yaml
+        toolbarButtons: create|delete
+        showSearch: true
+        showSorting: true
+        recordsPerPage: 10
+    manage:
+        form: $/omsb/organization/models/site/fields.yaml
+        recordsPerPage: 10
+
+# Child Companies Relation
+children:
+    label: Child Companies
+    view:
+        list: $/omsb/organization/models/company/columns.yaml
+        toolbarButtons: add|remove
+        showSearch: true
+        showSorting: true
+        recordsPerPage: 10
+    manage:
+        list: $/omsb/organization/models/company/columns.yaml
+        form: $/omsb/organization/models/company/fields.yaml
+        recordsPerPage: 10

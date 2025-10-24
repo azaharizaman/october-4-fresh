@@ -6,3 +6,34 @@ columns:
     id:
         label: ID
         searchable: true
+        sortable: true
+        width: 80
+        
+    code:
+        label: Code
+        searchable: true
+        sortable: true
+        
+    name:
+        label: Name
+        searchable: true
+        sortable: true
+        
+    type:
+        label: Type
+        searchable: true
+        sortable: true
+        
+    company:
+        label: Company
+        relation: company
+        select: name
+        searchable: true
+        sortable: false
+        
+    address:
+        label: Address
+        relation: address
+        select: address_city
+        searchable: true
+        sortable: false

@@ -6,3 +6,56 @@ fields:
     id:
         label: ID
         disabled: true
+        span: left
+        
+    company_id:
+        label: Company
+        type: relation
+        span: right
+        disabled: true
+        comment: Company this address belongs to
+        
+    address_street:
+        label: Street Address
+        type: textarea
+        size: small
+        placeholder: Enter street address
+        span: full
+        required: true
+        
+    address_city:
+        label: City
+        type: text
+        placeholder: Enter city
+        span: left
+        required: true
+        
+    address_state:
+        label: State
+        type: text
+        default: Sarawak
+        placeholder: Enter state
+        span: right
+        required: true
+        
+    address_postcode:
+        label: Postcode
+        type: text
+        placeholder: Enter postcode
+        span: left
+        required: true
+        
+    address_country:
+        label: Country
+        type: text
+        default: Malaysia
+        placeholder: Enter country
+        span: right
+        required: true
+        
+    region:
+        label: Region
+        type: text
+        placeholder: Enter region (optional)
+        span: full
+        comment: Optional region identifier

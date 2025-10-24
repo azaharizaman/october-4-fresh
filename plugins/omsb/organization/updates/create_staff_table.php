@@ -17,39 +17,40 @@ return new class extends Migration
     public function up()
     {
         Schema::create('omsb_organization_staff', function(Blueprint $table) {
+            $table->engine = 'InnoDB';
+            
             $table->id();
-            $table->string('staff_number')->nullable()->unique('idx_staff_staff_number_unique');
+            $table->string('staff_number')->nullable()->unique();
             $table->boolean('is_manager')->nullable();
             $table->date('date_join')->nullable();
             $table->date('date_resigned')->nullable();
             $table->string('position')->nullable();
             $table->string('qualification')->nullable();
             $table->string('contact_no')->nullable();
+            $table->timestamps();
+            $table->softDeletes();
             
-            // Foreign keys
+            // Foreign key - Backend user relationship
             $table->foreignId('user_id')
                 ->nullable()
                 ->constrained('backend_users')
-                ->nullOnDelete()
-                ->index('idx_staff_user_id');
-                
-            $table->foreignId('unit_id')
+                ->nullOnDelete();
+            
+            // Foreign key - Site relationship
+            $table->foreignId('site_id')
                 ->nullable()
                 ->constrained('omsb_organization_sites')
-                ->nullOnDelete()
-                ->index('idx_staff_unit_id');
-                
+                ->nullOnDelete();
+            
+            // Foreign key - Company relationship
             $table->foreignId('company_id')
                 ->nullable()
                 ->default(1)
                 ->constrained('omsb_organization_companies')
-                ->nullOnDelete()
-                ->index('idx_staff_company_id');
-            
-            $table->timestamps();
-            $table->softDeletes();
+                ->nullOnDelete();
             
             // Indexes
+            $table->index('staff_number', 'idx_staff_staff_number');
             $table->index('deleted_at', 'idx_staff_deleted_at');
         });
     }

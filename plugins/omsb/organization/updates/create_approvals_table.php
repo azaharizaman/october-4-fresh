@@ -17,8 +17,10 @@ return new class extends Migration
     public function up()
     {
         Schema::create('omsb_organization_approvals', function(Blueprint $table) {
+            $table->engine = 'InnoDB';
+            
             $table->id();
-            $table->string('code')->unique('idx_approvals_code_unique');
+            $table->string('code')->unique();
             $table->string('document_type'); // e.g., 'purchase_request', 'purchase_order', 'stock_adjustment'
             $table->string('action'); // e.g., 'approve', 'review', 'authorize'
             
@@ -47,28 +49,28 @@ return new class extends Migration
             $table->string('budget_type')->default('All'); // 'Capital', 'Operating', 'All'
             $table->string('service_type')->default('All'); // Additional categorization
             
-            // Foreign keys
-            $table->foreignId('staff_id')
-                ->constrained('omsb_organization_staff')
-                ->cascadeOnDelete()
-                ->index('idx_approvals_staff_id');
-                
-            $table->foreignId('site_id')
-                ->nullable()
-                ->constrained('omsb_organization_sites')
-                ->nullOnDelete()
-                ->index('idx_approvals_site_id');
-                
-            $table->foreignId('delegated_to_staff_id')
-                ->nullable()
-                ->constrained('omsb_organization_staff')
-                ->nullOnDelete()
-                ->index('idx_approvals_delegated_to_staff_id');
-            
             $table->timestamps();
             $table->softDeletes();
             
+            // Foreign key - Staff relationship
+            $table->foreignId('staff_id')
+                ->constrained('omsb_organization_staff')
+                ->cascadeOnDelete();
+            
+            // Foreign key - Site relationship
+            $table->foreignId('site_id')
+                ->nullable()
+                ->constrained('omsb_organization_sites')
+                ->nullOnDelete();
+            
+            // Foreign key - Delegated staff relationship
+            $table->foreignId('delegated_to_staff_id')
+                ->nullable()
+                ->constrained('omsb_organization_staff')
+                ->nullOnDelete();
+            
             // Indexes
+            $table->index('code', 'idx_approvals_code');
             $table->index(['document_type', 'action'], 'idx_approvals_document_action');
             $table->index(['floor_limit', 'ceiling_limit'], 'idx_approvals_limits');
             $table->index(['is_active', 'effective_from', 'effective_to'], 'idx_approvals_active_period');

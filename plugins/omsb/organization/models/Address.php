@@ -18,9 +18,28 @@ class Address extends Model
     public $table = 'omsb_organization_addresses';
 
     /**
+     * @var array fillable fields
+     */
+    protected $fillable = [
+        'address_street',
+        'address_city',
+        'address_state',
+        'address_postcode',
+        'address_country',
+        'region',
+        'company_id'
+    ];
+
+    /**
      * @var array rules for validation
      */
-    public $rules = [];
+    public $rules = [
+        'address_street' => 'required',
+        'address_city' => 'required',
+        'address_state' => 'required',
+        'address_postcode' => 'required',
+        'address_country' => 'required',
+    ];
 
     /**
      * @var array dates used by the model
@@ -28,4 +47,29 @@ class Address extends Model
     protected $dates = [
         'deleted_at'
     ];
+
+    /**
+     * @var array belongsTo relationships
+     */
+    public $belongsTo = [
+        'company' => [
+            Company::class,
+            'key' => 'company_id'
+        ]
+    ];
+
+
+    /**
+     * Get formatted address string
+     */
+    public function getFullAddressAttribute(): string
+    {
+        return trim(implode(', ', array_filter([
+            $this->address_street,
+            $this->address_city,
+            $this->address_state,
+            $this->address_postcode,
+            $this->address_country
+        ])));
+    }
 }

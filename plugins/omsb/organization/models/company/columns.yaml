@@ -6,3 +6,34 @@ columns:
     id:
         label: ID
         searchable: true
+        sortable: true
+        width: 80
+        
+    code:
+        label: Code
+        searchable: true
+        sortable: true
+        
+    name:
+        label: Name
+        searchable: true
+        sortable: true
+        
+    parent:
+        label: Parent Company
+        relation: parent
+        select: name
+        searchable: true
+        sortable: true
+        emptyValue: -- No Parent --
+        
+        
+    created_at:
+        label: Created At
+        type: datetime
+        sortable: true
+        
+    updated_at:
+        label: Updated At
+        type: datetime
+        sortable: true
