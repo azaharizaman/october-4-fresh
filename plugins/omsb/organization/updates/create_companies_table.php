@@ -22,24 +22,24 @@ return new class extends Migration
             $table->string('name');
             $table->string('logo')->nullable();
             
-            // Foreign keys
+            // Foreign keys - nullable to allow creation without parent or address
             $table->foreignId('parent_id')
                 ->nullable()
                 ->constrained('omsb_organization_companies')
-                ->nullOnDelete();
+                ->nullOnDelete()
+                ->index('idx_companies_parent_id');
                 
             $table->foreignId('address_id')
                 ->nullable()
                 ->constrained('omsb_organization_addresses')
-                ->nullOnDelete();
+                ->nullOnDelete()
+                ->index('idx_companies_address_id');
             
             $table->timestamps();
             $table->softDeletes();
 
             // Indexes
             $table->index('deleted_at', 'idx_companies_deleted_at');
-            $table->index('address_id', 'idx_companies_address_id');
-            $table->index('parent_id', 'idx_companies_parent_id');
         });
     }
 
