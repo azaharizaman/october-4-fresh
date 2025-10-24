@@ -1,0 +1,43 @@
+<?php namespace Omsb\Organization\Models;
+
+use Model;
+
+/**
+ * Site Model
+ *
+ * @link https://docs.octobercms.com/4.x/extend/system/models.html
+ */
+class Site extends Model
+{
+    use \October\Rain\Database\Traits\Validation;
+    use \October\Rain\Database\Traits\SoftDelete;
+
+    /**
+     * @var string table name
+     */
+    public $table = 'omsb_organization_sites';
+
+    /**
+     * @var array rules for validation
+     */
+    public $rules = [];
+
+    /**
+     * @var array dates used by the model
+     */
+    protected $dates = [
+        'deleted_at'
+    ];
+
+    // Relationships
+    public $belongsTo = [
+        'parent' => [Site::class, 'key' => 'parent_id'],
+        'company' => [Company::class],
+        'address' => [Address::class]
+    ];
+
+    public $hasMany = [
+        'children' => [Site::class, 'key' => 'parent_id'],
+        'warehouses' => [Warehouse::class]
+    ];
+}

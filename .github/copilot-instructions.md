@@ -3,7 +3,7 @@
 ## Project Overview
 - This project is a modular OctoberCMS application, extended with custom plugins and themes for the One Medicare Sdn Bhd.
 - Core structure: `modules/` (core features), `plugins/omsb/*` (domain-specific plugins), `themes/` (contain css and site structure definition which is less important since most of the user will be accessing the backend side of OctoberCMS and that part look and feel is defined by the default OctoberCMS Backend theme), and `config/` (environment/configuration).
-- Built on top of OctoberCMS latest version that utilized Laravel 12 with PHP 8.2 and above supported. All custom codebase (other than config) resides within `/plugins/omsb` folder and strictyly adhere to OctoberCMS conventions for plugins structure.
+- Built on top of OctoberCMS latest version that utilized Laravel 12 with PHP 8.2 and above supported. All custom codebase (other than config) resides within `/plugins/omsb` folder and strictly adhere to OctoberCMS conventions for plugins structure.
 
 ## Key Architectural Patterns
 - **Modules**: Core features (e.g., `backend`, `cms`, `editor`, `media`, `system`) are in `modules/`. Each module is self-contained with its own controllers, models, assets, and tests.
@@ -34,41 +34,329 @@
 ## Project-Specific Conventions
 - **Service Layer**: Business logic is extracted into service classes (e.g., `AdjustmentService`, `PurchaseRequestService`) that handle complex operations and maintain separation of concerns.
 - **Model Architecture**: Models use OctoberCMS models traits (https://docs.octobercms.com/4.x/extend/database/traits.html) and follow PHP 8.2 standards with return type declarations. Many models include morphTo relationships for flexible associations.
-- **Plugin structure**: Always use OctoberCMS plugin conventions. TSI plugins follow modern PHP 8.0 standards with comprehensive PHPDoc blocks.
+- **Plugin structure**: Always use OctoberCMS plugin conventions. OMSB plugins follow modern PHP 8.2 standards with comprehensive PHPDoc blocks.
 - **Testing**: Extend `PluginTestCase` for plugin tests. Register/boot plugins in `setUp()` if testing with dependencies.
 - **Asset management**: Themes use TailwindCSS and Laravel Mix. Edit `tailwind.config.js` for theme customization.
 - **Event-driven extensions**: Editor extensions are registered via the `editor.extension.register` event (see `modules/editor/README.md`).
-- **Naming**: TSI plugins are namespaced under `Tsi\` and follow clear domain separation (Inventory, Procurement, Organization, etc.).
+- **Naming**: OMSB plugins are namespaced under `Omsb\` and follow clear domain separation (Inventory, Procurement, Organization, etc.).
 
 ## Integration Points
-- **Laravel Foundation**: OctoberCMS is built on Laravel 6.0; use Laravel features where appropriate, but follow OctoberCMS conventions for structure.
+- **Laravel Foundation**: OctoberCMS is built on Laravel 12; use Laravel features where appropriate, but follow OctoberCMS conventions for structure.
 - **Vue Components**: Editor and some modules use Vue for client-side features (see `modules/editor/vuecomponents/`).
 - **External assets**: Themes may use external icon sets, illustrations from [unDraw](https://undraw.co/), and Tailwind plugins.
-- **Data Feeding**: The Feeder plugin provides activity tracking via morphTo relationships - models can have feeds that track user actions (e.g., `$user->first_name created this $model->title`).
-- **Cross-plugin dependencies**: Many plugins reference each other (e.g., Workflow integrates with Organization for staff management, Inventory connects to Organization for site/unit structure).
+- **Data/Audit Trailing and Tracking**: The Feeder plugin provides activity tracking via morphTo relationships - models can have feeds that track user actions (e.g., `$user->first_name created this $model->title`).
+- **Cross-plugin dependencies**: Many plugins reference each other (e.g., Workflow integrates with Organization for staff management, Inventory connects to Procurement for item definitions and to Organization for site/warehouse structure).
 
-## Domain-Specific Plugin Details (Detail Instructions, please refer to each plugin's README for full docs)
-- **Organization**: Core plugin managing companies, sites, sites-staff, warehouses with multi-hierarchy structure. hierarchical staff structure enables multi level approval workflows where staff with creator permission can create records and staff with approver permission can approve records created by staff under them in the hierarchy. This permission also is identified by transaction type, or in this application is called a Document. An creator or approver may have one or multiple document that he/she can create and/or approve. Every creator and approver staff must be assigned to a site or sites and each one will have a ceiling of how much a transaction value they can create or approve.
-- **Inventory**: This plugin is 1 of the 2 core operations plugin that handle inventory management and is linked tightly with the procurement management handled by procurement plugin. Inventory plugin handle inventory stock management, stock adjustment, stock transfer, stock opname, stock reservation, stock allocation, stock picking and packing, delivery order management, goods receipt management, item management with item categories and item units management, inventory valuation report generation and inventory movement report generation. Inventory plugin also integrate with Organization plugin to manage sites and warehouses structure along with staff hierarchy structure for approval workflow purpose. Inventory plugin also integrate with Workflow plugin to define the workflow for each document type in the inventory module (e.g. Receiving Stocks, Stock Adjustment, Stock Transfer) along with status transition rules and approver roles definition. Items are structured in two level of definition; the Master Item definition that define the item code, item name, item category, item unit, item type (consumable or non-consumable), and other general information about the item; and the Item Stock Keeping Unit (SKU) definition that define the specific SKU for each master item along with its own barcode, serial number (if applicable). The Master Item (Items) can be seen as the definition of the items, then the Warehouse Items (or stock items) where real transactions happens are defined at warehouse level and each warehouse will have its own stock quantity for each item SKU defined in the Master Item definition. In another word, Master Items does not have QoH (Quantity on Hand) defined, the QoH is only defined at warehouse level for each item SKU. Each inventory transaction document (e.g. Stock Adjustment, Stock Transfer, Goods Receipt) will affect the stock quantity of the item SKU at the warehouse level. Inventory plugin also integrate with Feeder plugin to keep track of all activities performed by the users in the system related to inventory management. To keep the movement of every warehouse item qty precisely recorded, it adopts a system much like double entry accounting system where every increase in qty must be matched with a decrease in qty in another warehouse or another location (e.g. in-transit). As an example, when goods are received from a vendor, the Goods Receipt document will increase the qty of the item SKU in the receiving warehouse while at the same time decrease the qty of the item SKU in the In-Transit warehouse (a virtual warehouse that represent items that are in transit). This way, the total qty of the item SKU across all warehouses will always be accurate and can be traced back to each transaction document that affected the qty. The model named InventoryLedger is the one that keep track of all qty movement for each warehouse item SKU along with reference to the document that caused the qty movement. This ledger system also enable accurate inventory valuation report generation based on various costing method (e.g. FIFO, LIFO, Average Cost) since every qty movement is recorded along with its cost and reference document. When a user views any ledger-related document (e.g. Stock Adjustment, Stock Transfer, Goods Receipt), he/she can see the detailed ledger entries that caused the qty movement for each item SKU in that document. Every month end, the system will automatically generate the inventory valuation report based on the selected costing method and record the closing balance for each item SKU in each warehouse. This closing balance will be used as the opening balance for the next month. Inventory plugin also provide various reports such as Inventory Movement Report, Inventory Valuation Report, Stock Opname Report, and Item Usage Report to help users monitor and analyze their inventory performance.
-- **Procurement**: The second core operations plugin that handle procurement management and is linked tightly with the inventory management handled by inventory plugin. Procurement plugin handle purchase request management, purchase order management, vendor management, vendor quotation management, goods receipt management, accounts payable management, and procurement budget management. Procurement plugin also integrate with Organization plugin to manage sites and warehouses structure along with staff hierarchy structure for approval workflow purpose. Procurement plugin also integrate with Workflow plugin to define the workflow for each document type in the procurement module (e.g. Purchase Request, Purchase Order, Vendor Quotation) along with status transition rules and approver roles definition. Procurement plugin also integrate with Feeder plugin to keep track of all activities performed by the users in the system related to procurement management. Purchase Request document created in procurement module can be converted into Purchase Order document which later will be used to receive goods into inventory module via Goods Receipt document. This way, the procurement process is tightly integrated with the inventory process to ensure accurate stock levels and financial records. Procurement plugin also provide various reports such as Purchase Request Report, Purchase Order Report, Vendor Performance Report, and Procurement Budget Report to help users monitor and analyze their procurement performance.
-- **Registrar**: Document (transaction type is called a Document. E.g: Purchase Order, Purchase Request, Inventory Adjustment) numbering patterns and registration management. Each document type can have it own numbering pattern defined in the Registrar plugin. The default pattern is as follows: SITECODE-DOCUMENTCODE-YYYY-##### (e.g. HQ-PR-2024-00001). Each document type can also have its own prefix and suffix defined in the Registrar plugin. Each document may have more than one status (Draft, Submitted, Reviewed, Approved, Rejected, Cancelled, Completed) that can be tracked and managed. Some status transition will require approval from staff with approver permission while some status transition can be done by the creator itself. Document status in-transition is also defined in the Workflow plugin. Status transition history is also recorded and can be viewed in the document detail page and can have a maximum number of days to perform the approval action before it is considered overdue and later will fallback to Draft status. Only document in Draft status can be edited or deleted. Registrar plugin also keep tracked of all issued document numbers to avoid duplication even those document is later cancelled or deleted (delete action will only render the document unseen from the interface but the record remains in the database for auditing purposes). Running number for each document type cam be set to reset yearly or can be continuous without reset. if the reset interval is yearly, the year part in the document number pattern will automatically update each year and the reset process is done automatically by the system at the beginning of each year.
-- **PettyCash**: -- KIV --
-- **Workflow**: This plugin keep tracks of every workflow definition and status transition rules. Each document type can have its own workflow definition with multiple status and transition rules defined. Each status transition can have its own set of approver roles defined. Only staff with the approver role assigned to the document type can perform the approval action for that document type. Workflow plugin also keep track of the history of status transition for each document and record the staff who performed the action along with timestamp. Each workflow changes a document status from status A to status B and in transition status. A document must be in only one active workflow at any time. A document can only be approved by staff with approver role assigned to that document type and who is in the hierarchy above the creator staff. A document can have multiple levels of approval depending on the hierarchy structure defined in the Organization plugin. as an example, a Purchase Request document created by a staff can be approved by his/her manager, and then by the department head, and then by the finance manager, depending on the hierarchy structure defined in the Organization plugin. Each approval action will change the document status to the next status defined in the workflow definition until it reaches the final status (e.g. Approved or Rejected). Each status transition can also have its own set of rules defined (e.g. maximum amount that can be approved by a certain approver role). If a document is rejected, it will be reverted back to either Draft status or previous status (defined in the workflow definition). An approved action will not need the user to mention the reason but all rejected action must have a reason mentioned by the approver staff. Each workflow definition will have a unique workflow code that can be referenced by other plugins (e.g. Inventory, Procurement) to determine the workflow for a specific document type and its current status.
-- **Feeder**: Feeder plugin is like a logger that keep tracks of all activities performed by the users in the system. Each activity is recorded as a feed item with details such as user who performed the action, action type, target model, timestamp, and additional data. Feeder plugin uses morphTo relationship to associate feed items with any model in the system. As an example, when a user creates a Purchase Request document, a feed item is created with the user id, action type (create), target model (Purchase Request), and timestamp. This feed item can later be viewed in the activity log of the user or the target model. Feeder plugin also provides methods to retrieve feed items based on various criteria such as user, action type, target model, and date range. This allows for easy tracking and auditing of user activities in the system. Feeder plugin also provide a sidebar view component that can be integrated into other plugins to display recent activities related to a specific model or user. This sidebar component can be customized to show different types of feed items and can be filtered based on user preferences. This plugin takes away the responsibility of each plugin to implement its own activity tracking mechanism and provides a centralized solution for activity logging across the entire system.
+## Domain-Specific Plugin Details
+
+### Organization
+Core plugin managing companies, sites, sites-staff, warehouses with multi-hierarchy structure. Hierarchical staff structure enables multi-level approval workflows where staff with creator permission can create records and staff with approver permission can approve records created by staff under them in the hierarchy. This permission is also identified by transaction type, or in this application is called a Document. A creator or approver may have one or multiple documents that he/she can create and/or approve. Every creator and approver staff must be assigned to a site or sites and each one will have a ceiling of how much a transaction value they can create or approve. Organization plugin also manages the site and warehouse structure where each site may have one or multiple warehouses. Each site with multiple active warehouses must have one designated as the receiving warehouse where all Purchase Order line items are received when fulfilled. This plugin also determin the level of data access based on the site assignment of the logged in staff, thus affecting the depth or report generation, dropdown selection, and data listing throughout the system.
+
+**Key Models:**
+- `Site`: Represents physical locations with optional warehouses; manages GL account definitions for financial integration
+- `Warehouse`: Storage locations within sites; one warehouse per site can be designated as the default receiving warehouse for incoming goods
+- `Staff`: User accounts with hierarchical relationships for approval workflows
+- `GLAccount`: Chart of accounts entries at site level for financial tracking
+
+**Receiving Warehouse Logic:**
+- Each site with multiple active warehouses must have one designated as the receiving warehouse (configurable by site admin)
+- If no receiving warehouse is explicitly set, the system defaults to the first warehouse returned by the query
+- This designation determines where Purchase Order line items are received when fulfilled
+
+### Procurement
+Core operations plugin managing the purchase lifecycle from requisition to payment. **Owns the master catalog of all Purchaseable Items** (`PurchaseableItem` model) - the single source of truth for everything that can be purchased.
+
+**Operational Workflow:**
+- All purchases are handled by Purchasing Dept staff (at HQ and sites)
+- HQ purchasing staff can create Purchase Orders for HQ and/or multiple sites under their hierarchy (each PO line specifies target site)
+- When vendor fulfills a PO:
+  - **Inventory items** (`is_inventory_item = true`) → Goods Receipt Note created at site's receiving warehouse
+  - **Non-inventory items** (`is_inventory_item = false`) → Delivery Order created (final document, no warehouse receipt)
+- Inventory items can **only** be received at sites with ≥1 active warehouse
+
+**PurchaseableItem Model Structure:**
+- `is_inventory_item` (boolean): Determines fulfillment routing (GRN vs. DO)
+  - **Immutable rule**: Cannot be changed if item has positive combined QoH across all warehouses
+  - Use case: Prevents reclassification of actively stocked items that would break ledger integrity
+- `item_type` (required enum): Asset classification (`consumable`, `equipment`, `spare_part`, `asset`, etc.)
+  - Used for reporting, GL mapping, and categorization
+  - Independent of `is_inventory_item` flag (e.g., "spare parts" can be inventory or non-inventory)
+- `item_category_id`: References `ItemCategory` (defined within Procurement plugin as metadata)
+- `gl_account_id`: For non-inventory items, maps to GL account in Organization plugin's site-level chart of accounts
+  - Used for automatic expense/asset journal entries on Delivery Order completion
+- Other fields: `code`, `name`, `description`, `unit_of_measure`, `barcode`, etc.
+
+**Key Relationships:**
+- `hasMany` → `Omsb\Inventory\Models\WarehouseItem`: One purchaseable item can have multiple warehouse-level SKUs
+- `belongsTo` → `ItemCategory`: Item categorization for reporting/filtering
+- `belongsTo` → `GlAccount` (via Organization plugin): Non-inventory GL mapping
+
+**Purchase Order Line Item Logic:**
+- Each PO line specifies:
+  - `purchaseable_item_id`: References master item catalog
+  - `site_id`: Target site for delivery
+  - `quantity`, `unit_price`, `total_amount`
+- When PO is approved and fulfilled:
+  - System checks `PurchaseableItem->is_inventory_item`
+  - If `true`: Routes to Goods Receipt Note → creates `InventoryLedger` entries at site's receiving warehouse
+  - If `false`: Routes to Delivery Order → records expense/asset journal entry using `gl_account_id`
+
+**Integrations:**
+- Organization plugin: Site/warehouse structure, staff hierarchy for approval workflows, GL account definitions
+- Workflow plugin: Document workflows (Purchase Request, Purchase Order, Vendor Quotation, Goods Receipt Note, Delivery Order) with status transition rules and approver roles
+- Feeder plugin: Activity tracking for all procurement documents
+
+**Reports:**
+- Purchase Request Report
+- Purchase Order Report
+- Vendor Performance Report
+- Procurement Budget Report
+
+### Inventory
+Core operations plugin managing **inventory-type Purchaseable Items only** (items where `is_inventory_item = true`). **References Procurement's `PurchaseableItem` model** for item definitions but maintains its own inventory-specific data.
+
+**Key Principle:** *All inventory items are purchaseable items, but not all purchaseable items are inventory items.*
+
+**Two-Level Item Structure:**
+1. **Master Items** (from `PurchaseableItem` in Procurement): Define "what can be stocked" (code, name, category, unit)
+2. **Warehouse Items (SKUs)**: Define "where and how much" - site-level stock records with:
+   - `purchaseable_item_id`: References master item
+   - `warehouse_id`: References specific warehouse
+   - `quantity_on_hand`: Current stock level
+   - `barcode`, `serial_number` (if applicable)
+   - **Uniqueness constraint**: One `PurchaseableItem` can only be referenced once per warehouse (no duplicates)
+
+**InventoryLedger System:**
+- Double-entry qty tracking: Every increase matched with decrease across warehouses/in-transit locations
+- Example: Goods Receipt from vendor
+  - **Increase**: Receiving warehouse QoH (+10 units)
+  - **Decrease**: In-Transit virtual warehouse (-10 units)
+- Each ledger entry records:
+  - `warehouse_item_id`: Affected SKU
+  - `document_type`, `document_id`: Source transaction (morphTo relationship)
+  - `quantity_change`: +/- value
+  - `balance_after`: Running balance
+  - `cost_per_unit`: For valuation (FIFO/LIFO/Average Cost)
+  - `timestamp`, `user_id`: Audit trail
+
+**Fulfillment Integration with Procurement:**
+- Goods Receipt Note creation:
+  - Triggered when PO line item has `purchaseable_item.is_inventory_item = true`
+  - Must be created at site with ≥1 active warehouse
+  - Creates `WarehouseItem` record if first receipt for that item at warehouse
+  - Generates paired `InventoryLedger` entries (increase receiving warehouse, decrease in-transit)
+- Delivery Order (non-inventory):
+  - Bypasses Inventory plugin entirely
+  - Handled by Procurement plugin for GL recording
+
+**Month-End Processes:**
+- Auto-generates inventory valuation report based on selected costing method (FIFO/LIFO/Average)
+- Records closing balances as next month's opening balances
+- Locks ledger entries for closed periods
+
+**Integrations:**
+- Procurement plugin: References `PurchaseableItem` for item master data, receives goods via GRN
+- Organization plugin: Site/warehouse structure for stock locations
+- Workflow plugin: Document status transitions (Receiving Stocks, Stock Adjustment, Stock Transfer)
+- Feeder plugin: Activity tracking for inventory documents
+
+**Operations Handled:**
+- Stock adjustment (qty corrections)
+- Stock transfer (between warehouses)
+- Stock opname (physical counts)
+- Stock reservation/allocation
+- Picking/packing
+- Delivery order management (for inventory items leaving system)
+- Goods receipt management (for inventory items entering system)
+
+**Reports:**
+- Inventory Movement Report
+- Inventory Valuation Report
+- Stock Opname Report
+- Item Usage Report
+
+### Registrar
+Document numbering patterns and registration management. Each document type can have its own numbering pattern defined in the Registrar plugin.
+
+**Default Pattern:** `SITECODE-DOCUMENTCODE-YYYY-#####` (e.g., `HQ-PR-2024-00001`)
+
+**Features:**
+- Custom prefix/suffix per document type
+- Running number reset options: yearly or continuous
+- Auto-increments year part when reset interval is yearly
+- Tracks all issued document numbers to avoid duplication (even for cancelled/deleted documents)
+- Soft-delete: Deleted documents remain in DB for auditing but are hidden from interface
+
+**Document Statuses:**
+- Draft (editable/deletable)
+- Submitted
+- Reviewed
+- Approved
+- Rejected
+- Cancelled
+- Completed
+
+**Status Transition Rules:**
+- Some transitions require approval from staff with approver permission
+- Some transitions can be performed by creator
+- Status transition logic defined in Workflow plugin
+- Transition history recorded with timestamp and staff details
+- Maximum approval days before fallback to Draft (overdue handling)
+- Only Draft status documents can be edited or deleted
+
+**Integration:**
+- Works with Workflow plugin for status transition definitions
+- Used by all document-based plugins (Procurement, Inventory, etc.)
+
+### Workflow
+Keeps track of every workflow definition and status transition rules. Each document type can have its own workflow definition with multiple statuses and transition rules.
+
+**Key Concepts:**
+- **Workflow Definition**: Unique workflow code referencing document type, statuses, and transition paths
+- **Status Transition**: Changes document from status A to status B via in-transition status
+- **Approver Roles**: Each transition can have specific approver roles defined
+- **Approval Hierarchy**: Documents can only be approved by staff in hierarchy above creator
+
+**Approval Flow Example (Purchase Request):**
+1. Staff creates PR (Draft status)
+2. Submits PR → Manager approves (Submitted → Reviewed)
+3. Department Head approves (Reviewed → Approved)
+4. Finance Manager final approval (Approved → Completed)
+- Each level can have amount-based rules (e.g., manager approves up to $10K, dept head up to $50K)
+
+**Rejection Handling:**
+- Rejected documents revert to Draft or previous status (configurable)
+- Rejection requires reason comment from approver
+- Approval actions do not require comments
+
+**Constraints:**
+- Document must be in only one active workflow at any time
+- Only staff with assigned approver role can approve that document type
+- Staff must be in hierarchy above creator to approve
+
+**Integration:**
+- Used by Procurement, Inventory, and other document-driven plugins
+- References Organization plugin for staff hierarchy
+
+### PettyCash
+-- KIV --
+
+### Feeder
+Activity tracking plugin that logs all user actions across the system. Uses morphTo relationships for flexible model associations.
+
+**Feed Item Structure:**
+- `user_id`: Staff who performed action
+- `action_type`: create, update, delete, approve, reject, etc.
+- `feedable_type`, `feedable_id`: morphTo relationship to target model
+- `timestamp`: When action occurred
+- `additional_data`: JSON field for action-specific details
+
+**Features:**
+- Centralized activity logging (removes need for per-plugin logging)
+- Filterable by user, action type, target model, date range
+- Sidebar view component for displaying recent activities
+- Customizable feed display per model type
+
+**Usage Example:**
+When user creates Purchase Request:
+```php
+Feed::create([
+    'user_id' => BackendAuth::getUser()->id,
+    'action_type' => 'create',
+    'feedable_type' => PurchaseRequest::class,
+    'feedable_id' => $pr->id,
+    'additional_data' => ['total_amount' => $pr->total_amount]
+]);
+```
+
+**Integration:**
+- Used by all OMSB plugins for activity tracking
+- Provides unified audit trail across modules
 
 ## Common Patterns
-- **Morphable relationships**: Many models use `morphTo` for flexible associations (e.g., `Feed` model can attach to any feedable model)
-- **Backend user integration**: Extensive use of `BackendAuth::getUser()` for user context in business logic
-- **Validation traits**: Models consistently use `\October\Rain\Database\Traits\Validation`
+
+### Cross-Plugin Item References
+- **Never duplicate item master data**: Inventory models reference Procurement's `PurchaseableItem` via `belongsTo`
+- **Standard relationship pattern**:
+  ```php
+  public $belongsTo = [
+      'purchaseable_item' => [\Omsb\Procurement\Models\PurchaseableItem::class]
+  ];
+  ```
+- **Warehouse-level uniqueness**: Each warehouse can reference a `PurchaseableItem` only once (enforced by unique index on `warehouse_id + purchaseable_item_id`)
+
+### Document Fulfillment Routing
+When a Purchase Order is fulfilled, check `PurchaseableItem->is_inventory_item`:
+- `true` → Create Goods Receipt Note (Inventory plugin)
+  - Generates `InventoryLedger` entries at receiving warehouse
+  - Updates `WarehouseItem` QoH
+- `false` → Create Delivery Order (Procurement plugin)
+  - Records expense/asset journal entry using `gl_account_id`
+  - No warehouse impact
+
+### Morphable Relationships
+Many models use `morphTo` for flexible associations:
+```php
+public $morphTo = [
+    'feedable' => []  // Can attach to any model
+];
+```
+Common uses: Feeder (activity tracking), InventoryLedger (document references), Workflow (status transitions)
+
+### Backend User Integration
+Extensive use of `BackendAuth::getUser()` for user context in business logic:
+```php
+$currentUser = BackendAuth::getUser();
+$canApprove = $currentUser->canApproveDocument($documentType, $amount);
+```
+
+### Validation Traits
+Models consistently use `\October\Rain\Database\Traits\Validation`:
+```php
+use \October\Rain\Database\Traits\Validation;
+
+public $rules = [
+    'is_inventory_item' => 'required|boolean',
+    'item_type' => 'required|in:consumable,equipment,spare_part,asset'
+];
+```
+
+## Critical Business Rules
+
+1. **Purchaseable Item Inventory Flag Immutability:**
+   - `is_inventory_item` cannot be changed if combined QoH > 0 across all warehouses
+   - Validation must check `WarehouseItem::where('purchaseable_item_id', $id)->sum('quantity_on_hand')`
+   - Prevents reclassification that would break ledger integrity
+
+2. **Warehouse Receiving Logic:**
+   - Sites with >1 active warehouse must have designated receiving warehouse
+   - If not set, system uses first warehouse from query (non-deterministic - should warn admin)
+   - PO line items auto-route to site's receiving warehouse on fulfillment
+
+3. **Inventory Ledger Double-Entry:**
+   - Every QoH increase must have matching decrease elsewhere
+   - In-transit virtual warehouse acts as buffer for goods in transit
+   - Ledger entries are immutable once created (audit trail)
+
+4. **Approval Hierarchy Enforcement:**
+   - Approver must be in Organization hierarchy above creator
+   - Approval ceiling (amount limits) enforced per staff/document type
+   - Workflow transitions validated against staff permissions before execution
+
+5. **Document Status Constraints:**
+   - Only Draft documents can be edited/deleted
+   - Status transitions must follow Workflow definitions
+   - Rejected documents require reason comments
+   - Overdue approvals auto-revert to Draft after configured days
 
 ## References
-- See `README.md` in root, themes, and plugins for more details.
+- See `README.md` in root, themes, and plugins for more details
 - Plugin architecture overview in `plugins/omsb/README.md` with detailed documentation status
-- For OctoberCMS plugin's development: https://docs.octobercms.com/4.x/extend/system/plugins.html
-- For OctoberCMS conventions, see https://octobercms.com/help/guidelines/developer
+- For OctoberCMS plugin development: https://docs.octobercms.com/4.x/extend/system/plugins.html
+- For OctoberCMS conventions: https://octobercms.com/help/guidelines/developer
 - For OctoberCMS quality guidelines: https://octobercms.com/help/guidelines/quality
 - For OctoberCMS API reference: https://docs.octobercms.com/4.x/element/form-fields.html
-- For Laravel Mix/Tailwind, see theme `README.md` and `tailwind.config.js`.
+- For Laravel Mix/Tailwind, see theme `README.md` and `tailwind.config.js`
 
 ---
 
