@@ -91,6 +91,30 @@ class Company extends Model
         ]
     ];
 
+    public $belongsToMany = [
+        'addresses' => [
+            Address::class,
+            'table' => 'omsb_organization_company_addresses',
+            'pivot' => ['is_mailing', 'is_administrative', 'is_receiving_goods', 'is_billing', 'is_registered_office', 'is_primary', 'is_active', 'effective_from', 'effective_to', 'notes']
+        ]
+    ];
+    
+    // Helper methods
+    public function getPrimaryAddress()
+    {
+        return $this->addresses()->wherePivot('is_primary', true)->first();
+    }
+    
+    public function getMailingAddress()
+    {
+        return $this->addresses()->wherePivot('is_mailing', true)->first();
+    }
+    
+    public function getReceivingAddress()
+    {
+        return $this->addresses()->wherePivot('is_receiving_goods', true)->first();
+    }
+
     /**
      * Get the display name for the company
      */

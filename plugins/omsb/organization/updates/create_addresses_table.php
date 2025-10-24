@@ -27,16 +27,11 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
             
-            // Foreign Key column without constraint to avoid circular dependency
-            // The relationship is managed at the ORM level in the Address model
-            $table->unsignedBigInteger('company_id')->nullable();
-            
             // Unique constraint
             $table->unique(['address_street', 'address_city', 'address_state', 'address_postcode', 'address_country'], 'uniq_addresses');
             
             // Indexes
             $table->index('deleted_at', 'idx_addresses_deleted_at');
-            $table->index('company_id', 'idx_addresses_company_id');
         });
     }
 

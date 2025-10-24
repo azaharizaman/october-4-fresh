@@ -58,6 +58,14 @@ class Address extends Model
         ]
     ];
 
+    public $belongsToMany = [
+        'companies' => [
+            Company::class,
+            'table' => 'omsb_organization_company_addresses',
+            'pivot' => ['is_mailing', 'is_administrative', 'is_receiving_goods', 'is_billing', 'is_registered_office', 'is_primary', 'is_active', 'effective_from', 'effective_to', 'notes']
+        ]
+    ];
+
     /**
      * Get formatted address string
      */
