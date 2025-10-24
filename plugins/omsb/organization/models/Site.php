@@ -38,6 +38,6 @@ class Site extends Model
 
     public $hasMany = [
         'children' => [Site::class, 'key' => 'parent_id'],
-        'warehouses' => [Warehouse::class]
+        'warehouses' => [\Omsb\Inventory\Models\Warehouse::class]
     ];
 }
