@@ -24,8 +24,7 @@ class Company extends Model
         'code',
         'name',
         'logo',
-        'parent_id',
-        'address_id'
+        'parent_id'
     ];
 
     /**
@@ -60,10 +59,6 @@ class Company extends Model
         'parent' => [
             Company::class,
             'key' => 'parent_id'
-        ],
-        'address' => [
-            Address::class,
-            'key' => 'address_id'
         ]
     ];
 
@@ -131,25 +126,5 @@ class Company extends Model
             ->all();
     }
 
-    /**
-     * Options for address dropdown (only addresses belonging to this company)
-     */
-    public function getAddressIdOptions(): array
-    {
-        if (!$this->id) {
-            return [];
-        }
 
-        return $this->addresses()
-            ->orderBy('address_city')
-            ->get()
-            ->mapWithKeys(function ($address) {
-                $label = $address->address_street . ', ' . 
-                         $address->address_city . ', ' . 
-                         $address->address_state . ' ' . 
-                         $address->address_postcode;
-                return [$address->id => $label];
-            })
-            ->all();
-    }
 }

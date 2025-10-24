@@ -24,34 +24,18 @@ return new class extends Migration
             $table->string('address_postcode')->nullable();
             $table->string('address_country')->default('Malaysia');
             $table->string('region')->nullable();
-            
-            // Foreign key
-            $table->foreign('company_id')
-                ->references('id')->on('omsb_organization_companies')
-                ->onDelete('null')
-                ->index('idx_addresses_company_id');
-            
-            // Address usage types (boolean flags)
-            $table->boolean('is_mailing')->default(false);
-            $table->boolean('is_administrative')->default(false);
-            $table->boolean('is_receiving_goods')->default(false); // For PO deliveries
-            $table->boolean('is_billing')->default(false);
-            $table->boolean('is_registered_office')->default(false); // Legal registered address
-            $table->boolean('is_primary')->default(false); // Primary address for the company
-            
-            // Additional attributes
-            $table->boolean('is_active')->default(true);
-            $table->date('effective_from')->nullable();
-            $table->date('effective_to')->nullable();
-            $table->text('notes')->nullable(); // Additional notes about this address usage
-            
             $table->timestamps();
             $table->softDeletes();
             
+            // Foreign key - Company relationship
+            $table->unsignedBigInteger('company_id')->nullable();
+            $table->foreign('company_id')
+                ->references('id')
+                ->on('omsb_organization_companies')
+                ->onDelete('cascade');
+            
             // Indexes
-            $table->index(['company_id', 'is_primary'], 'idx_addresses_company_primary');
-            $table->index(['company_id', 'is_mailing'], 'idx_addresses_company_mailing');
-            $table->index(['company_id', 'is_receiving_goods'], 'idx_addresses_company_receiving');
+            $table->index('company_id', 'idx_addresses_company_id');
             $table->index('deleted_at', 'idx_addresses_deleted_at');
         });
     }
