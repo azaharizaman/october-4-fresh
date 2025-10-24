@@ -1,7 +1,8 @@
 v1.0.1: First version of Organization
-v1.0.2: Initial Migration
-- create_companies_table.php
-- create_sites_table.php
-- create_staff_table.php
-- create_approvals_table.php
-- create_addresses_table.php
+v1.0.2: 
+  - 'Initial Migration'
+  - create_companies_table.php
+  - create_sites_table.php
+  - create_staff_table.php
+  - create_approvals_table.php
+  - create_addresses_table.php

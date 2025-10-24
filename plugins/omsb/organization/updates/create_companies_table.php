@@ -26,20 +26,20 @@ return new class extends Migration
             $table->foreignId('parent_id')
                 ->nullable()
                 ->constrained('omsb_organization_companies')
-                ->nullOnDelete()
-                ->index('idx_companies_parent_id');
+                ->nullOnDelete();
                 
             $table->foreignId('address_id')
                 ->nullable()
                 ->constrained('omsb_organization_addresses')
-                ->nullOnDelete()
-                ->index('idx_companies_address_id');
+                ->nullOnDelete();
             
             $table->timestamps();
             $table->softDeletes();
 
             // Indexes
             $table->index('deleted_at', 'idx_companies_deleted_at');
+            $table->index('address_id', 'idx_companies_address_id');
+            $table->index('parent_id', 'idx_companies_parent_id');
         });
     }
 

@@ -85,6 +85,12 @@ class Company extends Model
         ]
     ];
 
+    public $attachOne = [
+        'logo' => [
+            \System\Models\File::class
+        ]
+    ];
+
     /**
      * Get the display name for the company
      */

@@ -30,27 +30,27 @@ return new class extends Migration
             $table->foreignId('user_id')
                 ->nullable()
                 ->constrained('backend_users')
-                ->nullOnDelete()
-                ->index('idx_staff_user_id');
-                
-            $table->foreignId('unit_id')
+                ->nullOnDelete();
+
+            $table->foreignId('site_id')
                 ->nullable()
                 ->constrained('omsb_organization_sites')
-                ->nullOnDelete()
-                ->index('idx_staff_unit_id');
+                ->nullOnDelete();
                 
             $table->foreignId('company_id')
                 ->nullable()
                 ->default(1)
                 ->constrained('omsb_organization_companies')
-                ->nullOnDelete()
-                ->index('idx_staff_company_id');
+                ->nullOnDelete();
             
             $table->timestamps();
             $table->softDeletes();
             
             // Indexes
             $table->index('deleted_at', 'idx_staff_deleted_at');
+            $table->index('user_id', 'idx_staff_user_id');
+            $table->index('site_id', 'idx_staff_site_id');
+            $table->index('company_id', 'idx_staff_company_id');
         });
     }
 

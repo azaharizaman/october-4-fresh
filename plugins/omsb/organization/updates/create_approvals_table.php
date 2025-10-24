@@ -50,20 +50,17 @@ return new class extends Migration
             // Foreign keys
             $table->foreignId('staff_id')
                 ->constrained('omsb_organization_staff')
-                ->cascadeOnDelete()
-                ->index('idx_approvals_staff_id');
+                ->cascadeOnDelete();
                 
             $table->foreignId('site_id')
                 ->nullable()
                 ->constrained('omsb_organization_sites')
-                ->nullOnDelete()
-                ->index('idx_approvals_site_id');
+                ->nullOnDelete();
                 
             $table->foreignId('delegated_to_staff_id')
                 ->nullable()
                 ->constrained('omsb_organization_staff')
-                ->nullOnDelete()
-                ->index('idx_approvals_delegated_to_staff_id');
+                ->nullOnDelete();
             
             $table->timestamps();
             $table->softDeletes();
@@ -73,6 +70,9 @@ return new class extends Migration
             $table->index(['floor_limit', 'ceiling_limit'], 'idx_approvals_limits');
             $table->index(['is_active', 'effective_from', 'effective_to'], 'idx_approvals_active_period');
             $table->index('deleted_at', 'idx_approvals_deleted_at');
+            $table->index('staff_id', 'idx_approvals_staff_id');
+            $table->index('site_id', 'idx_approvals_site_id');
+            $table->index('delegated_to_staff_id', 'idx_approvals_delegated_to_staff_id');
             
             // Unique constraint to prevent duplicate approval definitions
             $table->unique([

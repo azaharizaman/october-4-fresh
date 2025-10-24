@@ -31,14 +31,14 @@ return new class extends Migration
             $table->foreignId('company_id')
                 ->nullable()
                 ->constrained('omsb_organization_companies')
-                ->nullOnDelete()
-                ->index('idx_addresses_company_id');
+                ->nullOnDelete();
             
             // Unique constraint
             $table->unique(['address_street', 'address_city', 'address_state', 'address_postcode', 'address_country'], 'uniq_addresses');
             
             // Indexes
             $table->index('deleted_at', 'idx_addresses_deleted_at');
+            $table->index('company_id', 'idx_addresses_company_id');
         });
     }
 
