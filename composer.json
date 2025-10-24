@@ -9,7 +9,8 @@
         "october/rain": "^4.0",
         "laravel/framework": "^12.0",
         "october/all": "^4.0",
-        "predis/predis": "^3.2"
+        "predis/predis": "^3.2",
+        "responsiv/currency-plugin": "^2.1"
     },
     "require-dev": {
         "phpunit/phpunit": "^8.5|^9.0",
