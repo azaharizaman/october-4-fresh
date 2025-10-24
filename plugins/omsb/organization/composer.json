@@ -1,7 +1,7 @@
 {
     "name": "omsb/organization-plugin",
     "type": "october-plugin",
-    "description": "No description provided yet...",
+    "description": "Organization plugin to manage company sites and warehouses the staff with multi hierarchy structure.",
     "require": {
         "composer/installers": "~1.0"
     }

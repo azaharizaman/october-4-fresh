@@ -1,0 +1,31 @@
+# ===================================
+#  Form Behavior Config
+# ===================================
+
+# Record name
+name: Site Controller
+
+# Model Form Field configuration
+form: $/omsb/organization/models/sitecontroller/fields.yaml
+
+# Model Class name
+modelClass: Omsb\Organization\Models\SiteController
+
+# Default redirect location
+defaultRedirect: omsb/organization/sitecontroller
+
+# Create page
+create:
+    title: backend::lang.form.create_title
+    redirect: omsb/organization/sitecontroller/update/:id
+    redirectClose: omsb/organization/sitecontroller
+
+# Update page
+update:
+    title: backend::lang.form.update_title
+    redirect: omsb/organization/sitecontroller
+    redirectClose: omsb/organization/sitecontroller
+
+# Preview page
+preview:
+    title: backend::lang.form.preview_title

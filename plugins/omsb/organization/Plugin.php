@@ -17,9 +17,9 @@ class Plugin extends PluginBase
     {
         return [
             'name' => 'Organization',
-            'description' => 'No description provided yet...',
+            'description' => 'Organization plugin to manage company sites and warehouses the staff with multi hierarchy structure.',
             'author' => 'Omsb',
-            'icon' => 'icon-leaf'
+            'icon' => 'icon-building',
         ];
     }
 
@@ -71,12 +71,10 @@ class Plugin extends PluginBase
      */
     public function registerNavigation()
     {
-        return []; // Remove this line to activate
-
         return [
             'organization' => [
                 'label' => 'Organization',
-                'url' => Backend::url('omsb/organization/mycontroller'),
+                'url' => Backend::url('omsb/organization/SiteController'),
                 'icon' => 'icon-leaf',
                 'permissions' => ['omsb.organization.*'],
                 'order' => 500,
