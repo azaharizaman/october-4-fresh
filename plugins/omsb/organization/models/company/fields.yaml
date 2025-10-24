@@ -6,3 +6,76 @@ fields:
     id:
         label: ID
         disabled: true
+        span: left
+        
+    code:
+        label: Code
+        type: text
+        placeholder: Enter unique company code
+        span: left
+        required: true
+        comment: Unique identifier for the company
+        
+    name:
+        label: Name
+        type: text
+        placeholder: Enter company name
+        span: right
+        required: true
+        comment: Full company name
+        
+    parent_id:
+        label: Parent Company
+        type: dropdown
+        placeholder: Select parent company (optional)
+        span: left
+        emptyOption: -- No Parent --
+        comment: Select a parent company to create a hierarchy
+        
+    logo:
+        label: Company Logo
+        type: fileupload
+        mode: image
+        imageHeight: 200
+        imageWidth: 200
+        thumbOptions:
+            mode: crop
+            extension: auto
+        span: right
+        comment: Upload company logo (optional)
+        
+    address_id:
+        label: Primary Address
+        type: dropdown
+        placeholder: Select primary address
+        span: full
+        emptyOption: -- Select Address --
+        depends: id
+        comment: Select the primary address from addresses defined below
+        trigger:
+            action: show
+            field: id
+            condition: value[id]
+            
+secondaryTabs:
+    fields:
+        addresses:
+            label: Addresses
+            type: partial
+            path: $/omsb/organization/controllers/companies/_addresses.php
+            tab: Addresses
+            comment: Manage company addresses
+            
+        sites:
+            label: Sites
+            type: partial
+            path: $/omsb/organization/controllers/companies/_sites.php
+            tab: Sites
+            comment: Manage company sites
+            
+        children:
+            label: Child Companies
+            type: partial
+            path: $/omsb/organization/controllers/companies/_children.php
+            tab: Child Companies
+            comment: View child companies in hierarchy
