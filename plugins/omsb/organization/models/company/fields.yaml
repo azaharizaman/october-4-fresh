@@ -44,18 +44,6 @@ fields:
         span: right
         comment: Upload company logo (optional)
         
-    address_id:
-        label: Primary Address
-        type: dropdown
-        placeholder: Select primary address
-        span: full
-        emptyOption: -- Select Address --
-        depends: id
-        comment: Select the primary address from addresses defined below
-        trigger:
-            action: show
-            field: id
-            condition: value[id]
             
 secondaryTabs:
     fields:

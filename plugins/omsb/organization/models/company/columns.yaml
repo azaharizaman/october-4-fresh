@@ -27,13 +27,6 @@ columns:
         sortable: true
         emptyValue: -- No Parent --
         
-    address:
-        label: Primary Address
-        relation: address
-        select: address_city
-        searchable: true
-        sortable: false
-        emptyValue: -- No Address --
         
     created_at:
         label: Created At
