@@ -17,6 +17,8 @@ return new class extends Migration
     public function up()
     {
         Schema::create('omsb_organization_addresses', function(Blueprint $table) {
+            $table->engine = 'InnoDB';
+            
             $table->id();
             $table->text('address_street')->nullable();
             $table->string('address_city')->nullable();
@@ -28,14 +30,12 @@ return new class extends Migration
             $table->softDeletes();
             
             // Foreign key - Company relationship
-            $table->unsignedBigInteger('company_id')->nullable();
-            $table->foreign('company_id')
-                ->references('id')
-                ->on('omsb_organization_companies')
-                ->onDelete('cascade');
+            $table->foreignId('company_id')
+                ->nullable()
+                ->constrained('omsb_organization_companies')
+                ->cascadeOnDelete();
             
             // Indexes
-            $table->index('company_id', 'idx_addresses_company_id');
             $table->index('deleted_at', 'idx_addresses_deleted_at');
         });
     }

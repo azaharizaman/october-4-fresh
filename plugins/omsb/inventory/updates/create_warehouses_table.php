@@ -17,37 +17,40 @@ return new class extends Migration
     public function up()
     {
         Schema::create('omsb_inventory_warehouses', function(Blueprint $table) {
+            $table->engine = 'InnoDB';
+            
             $table->id();
-            $table->string('code')->unique('idx_warehouses_code_unique');
+            $table->string('code')->unique();
             $table->string('name');
-            $table->string('status')->default('Active')->index('idx_warehouses_status');
-            $table->string('type')->default('Main')->index('idx_warehouses_type');
+            $table->string('status')->default('Active');
+            $table->string('type')->default('Main');
             $table->string('tel_no')->nullable();
             $table->string('fax_no')->nullable();
-            
-            // Foreign keys
-            $table->foreignId('in_charge_person')
-                ->nullable()
-                ->constrained('omsb_organization_staff')
-                ->nullOnDelete()
-                ->index('idx_warehouses_in_charge_person');
-                
-            $table->foreignId('site_id')
-                ->nullable()
-                ->constrained('omsb_organization_sites')
-                ->nullOnDelete()
-                ->index('idx_warehouses_site_id');
-            
-            $table->foreignId('address_id')
-                ->nullable()
-                ->constrained('omsb_organization_addresses')
-                ->nullOnDelete()
-                ->index('idx_warehouses_address_id');
-            
             $table->timestamps();
             $table->softDeletes();
             
+            // Foreign key - In charge person
+            $table->foreignId('in_charge_person')
+                ->nullable()
+                ->constrained('omsb_organization_staff')
+                ->nullOnDelete();
+            
+            // Foreign key - Site relationship
+            $table->foreignId('site_id')
+                ->nullable()
+                ->constrained('omsb_organization_sites')
+                ->nullOnDelete();
+            
+            // Foreign key - Address relationship
+            $table->foreignId('address_id')
+                ->nullable()
+                ->constrained('omsb_organization_addresses')
+                ->nullOnDelete();
+            
             // Indexes
+            $table->index('code', 'idx_warehouses_code');
+            $table->index('status', 'idx_warehouses_status');
+            $table->index('type', 'idx_warehouses_type');
             $table->index('deleted_at', 'idx_warehouses_deleted_at');
         });
     }

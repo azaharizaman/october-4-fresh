@@ -17,6 +17,8 @@ return new class extends Migration
     public function up()
     {
         Schema::create('omsb_organization_staff', function(Blueprint $table) {
+            $table->engine = 'InnoDB';
+            
             $table->id();
             $table->string('staff_number')->nullable()->unique();
             $table->boolean('is_manager')->nullable();
@@ -29,31 +31,26 @@ return new class extends Migration
             $table->softDeletes();
             
             // Foreign key - Backend user relationship
-            $table->unsignedBigInteger('user_id')->nullable();
-            $table->foreign('user_id')
-                ->references('id')
-                ->on('backend_users')
-                ->onDelete('set null');
+            $table->foreignId('user_id')
+                ->nullable()
+                ->constrained('backend_users')
+                ->nullOnDelete();
             
             // Foreign key - Site relationship
-            $table->unsignedBigInteger('site_id')->nullable();
-            $table->foreign('site_id')
-                ->references('id')
-                ->on('omsb_organization_sites')
-                ->onDelete('set null');
+            $table->foreignId('site_id')
+                ->nullable()
+                ->constrained('omsb_organization_sites')
+                ->nullOnDelete();
             
             // Foreign key - Company relationship
-            $table->unsignedBigInteger('company_id')->nullable()->default(1);
-            $table->foreign('company_id')
-                ->references('id')
-                ->on('omsb_organization_companies')
-                ->onDelete('set null');
+            $table->foreignId('company_id')
+                ->nullable()
+                ->default(1)
+                ->constrained('omsb_organization_companies')
+                ->nullOnDelete();
             
             // Indexes
             $table->index('staff_number', 'idx_staff_staff_number');
-            $table->index('user_id', 'idx_staff_user_id');
-            $table->index('site_id', 'idx_staff_site_id');
-            $table->index('company_id', 'idx_staff_company_id');
             $table->index('deleted_at', 'idx_staff_deleted_at');
         });
     }

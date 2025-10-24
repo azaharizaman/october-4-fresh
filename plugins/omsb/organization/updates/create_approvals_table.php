@@ -17,6 +17,8 @@ return new class extends Migration
     public function up()
     {
         Schema::create('omsb_organization_approvals', function(Blueprint $table) {
+            $table->engine = 'InnoDB';
+            
             $table->id();
             $table->string('code')->unique();
             $table->string('document_type'); // e.g., 'purchase_request', 'purchase_order', 'stock_adjustment'
@@ -51,34 +53,27 @@ return new class extends Migration
             $table->softDeletes();
             
             // Foreign key - Staff relationship
-            $table->unsignedBigInteger('staff_id');
-            $table->foreign('staff_id')
-                ->references('id')
-                ->on('omsb_organization_staff')
-                ->onDelete('cascade');
+            $table->foreignId('staff_id')
+                ->constrained('omsb_organization_staff')
+                ->cascadeOnDelete();
             
             // Foreign key - Site relationship
-            $table->unsignedBigInteger('site_id')->nullable();
-            $table->foreign('site_id')
-                ->references('id')
-                ->on('omsb_organization_sites')
-                ->onDelete('set null');
+            $table->foreignId('site_id')
+                ->nullable()
+                ->constrained('omsb_organization_sites')
+                ->nullOnDelete();
             
             // Foreign key - Delegated staff relationship
-            $table->unsignedBigInteger('delegated_to_staff_id')->nullable();
-            $table->foreign('delegated_to_staff_id')
-                ->references('id')
-                ->on('omsb_organization_staff')
-                ->onDelete('set null');
+            $table->foreignId('delegated_to_staff_id')
+                ->nullable()
+                ->constrained('omsb_organization_staff')
+                ->nullOnDelete();
             
             // Indexes
             $table->index('code', 'idx_approvals_code');
             $table->index(['document_type', 'action'], 'idx_approvals_document_action');
             $table->index(['floor_limit', 'ceiling_limit'], 'idx_approvals_limits');
             $table->index(['is_active', 'effective_from', 'effective_to'], 'idx_approvals_active_period');
-            $table->index('staff_id', 'idx_approvals_staff_id');
-            $table->index('site_id', 'idx_approvals_site_id');
-            $table->index('delegated_to_staff_id', 'idx_approvals_delegated_to_staff_id');
             $table->index('deleted_at', 'idx_approvals_deleted_at');
             
             // Unique constraint to prevent duplicate approval definitions

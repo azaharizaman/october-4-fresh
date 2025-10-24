@@ -17,6 +17,8 @@ return new class extends Migration
     public function up()
     {
         Schema::create('omsb_organization_sites', function(Blueprint $table) {
+            $table->engine = 'InnoDB';
+            
             $table->id();
             $table->string('code')->unique();
             $table->string('name');
@@ -27,32 +29,26 @@ return new class extends Migration
             $table->softDeletes();
             
             // Foreign key - Parent site (self-referencing)
-            $table->unsignedBigInteger('parent_id')->nullable();
-            $table->foreign('parent_id')
-                ->references('id')
-                ->on('omsb_organization_sites')
-                ->onDelete('set null');
+            $table->foreignId('parent_id')
+                ->nullable()
+                ->constrained('omsb_organization_sites')
+                ->nullOnDelete();
             
             // Foreign key - Company relationship
-            $table->unsignedBigInteger('company_id')->nullable();
-            $table->foreign('company_id')
-                ->references('id')
-                ->on('omsb_organization_companies')
-                ->onDelete('cascade');
+            $table->foreignId('company_id')
+                ->nullable()
+                ->constrained('omsb_organization_companies')
+                ->cascadeOnDelete();
             
             // Foreign key - Address relationship
-            $table->unsignedBigInteger('address_id')->nullable();
-            $table->foreign('address_id')
-                ->references('id')
-                ->on('omsb_organization_addresses')
-                ->onDelete('set null');
+            $table->foreignId('address_id')
+                ->nullable()
+                ->constrained('omsb_organization_addresses')
+                ->nullOnDelete();
             
             // Indexes
             $table->index('code', 'idx_sites_code');
             $table->index('type', 'idx_sites_type');
-            $table->index('parent_id', 'idx_sites_parent_id');
-            $table->index('company_id', 'idx_sites_company_id');
-            $table->index('address_id', 'idx_sites_address_id');
             $table->index('deleted_at', 'idx_sites_deleted_at');
         });
     }

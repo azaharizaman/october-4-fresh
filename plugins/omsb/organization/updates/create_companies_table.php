@@ -17,6 +17,8 @@ return new class extends Migration
     public function up()
     {
         Schema::create('omsb_organization_companies', function(Blueprint $table) {
+            $table->engine = 'InnoDB';
+            
             $table->id();
             $table->string('code')->unique();
             $table->string('name');
@@ -25,15 +27,13 @@ return new class extends Migration
             $table->softDeletes();
             
             // Foreign key - Parent company (self-referencing)
-            $table->unsignedBigInteger('parent_id')->nullable();
-            $table->foreign('parent_id')
-                ->references('id')
-                ->on('omsb_organization_companies')
-                ->onDelete('set null');
+            $table->foreignId('parent_id')
+                ->nullable()
+                ->constrained('omsb_organization_companies')
+                ->nullOnDelete();
             
             // Indexes
             $table->index('code', 'idx_companies_code');
-            $table->index('parent_id', 'idx_companies_parent_id');
             $table->index('deleted_at', 'idx_companies_deleted_at');
         });
     }
