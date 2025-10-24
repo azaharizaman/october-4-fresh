@@ -1,3 +1,6 @@
 *
 !omsb
+!october
+!october/test
+!october/test/*
 !.gitignore
