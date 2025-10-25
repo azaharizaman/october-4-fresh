@@ -1,0 +1,31 @@
+# ===================================
+#  Form Behavior Config
+# ===================================
+
+# Record name
+name: Stock Transfer
+
+# Model Form Field configuration
+form: $/omsb/inventory/models/stocktransfer/fields.yaml
+
+# Model Class name
+modelClass: Omsb\Inventory\Models\StockTransfer
+
+# Default redirect location
+defaultRedirect: omsb/inventory/stocktransfers
+
+# Create page
+create:
+    title: backend::lang.form.create_title
+    redirect: omsb/inventory/stocktransfers/update/:id
+    redirectClose: omsb/inventory/stocktransfers
+
+# Update page
+update:
+    title: backend::lang.form.update_title
+    redirect: omsb/inventory/stocktransfers
+    redirectClose: omsb/inventory/stocktransfers
+
+# Preview page
+preview:
+    title: backend::lang.form.preview_title

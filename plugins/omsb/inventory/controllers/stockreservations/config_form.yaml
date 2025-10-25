@@ -1,0 +1,31 @@
+# ===================================
+#  Form Behavior Config
+# ===================================
+
+# Record name
+name: Stock Reservation
+
+# Model Form Field configuration
+form: $/omsb/inventory/models/stockreservation/fields.yaml
+
+# Model Class name
+modelClass: Omsb\Inventory\Models\StockReservation
+
+# Default redirect location
+defaultRedirect: omsb/inventory/stockreservations
+
+# Create page
+create:
+    title: backend::lang.form.create_title
+    redirect: omsb/inventory/stockreservations/update/:id
+    redirectClose: omsb/inventory/stockreservations
+
+# Update page
+update:
+    title: backend::lang.form.update_title
+    redirect: omsb/inventory/stockreservations
+    redirectClose: omsb/inventory/stockreservations
+
+# Preview page
+preview:
+    title: backend::lang.form.preview_title

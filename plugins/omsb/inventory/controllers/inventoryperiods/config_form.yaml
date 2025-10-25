@@ -1,0 +1,31 @@
+# ===================================
+#  Form Behavior Config
+# ===================================
+
+# Record name
+name: Inventory Period
+
+# Model Form Field configuration
+form: $/omsb/inventory/models/inventoryperiod/fields.yaml
+
+# Model Class name
+modelClass: Omsb\Inventory\Models\InventoryPeriod
+
+# Default redirect location
+defaultRedirect: omsb/inventory/inventoryperiods
+
+# Create page
+create:
+    title: backend::lang.form.create_title
+    redirect: omsb/inventory/inventoryperiods/update/:id
+    redirectClose: omsb/inventory/inventoryperiods
+
+# Update page
+update:
+    title: backend::lang.form.update_title
+    redirect: omsb/inventory/inventoryperiods
+    redirectClose: omsb/inventory/inventoryperiods
+
+# Preview page
+preview:
+    title: backend::lang.form.preview_title

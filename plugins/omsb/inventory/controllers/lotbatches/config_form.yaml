@@ -1,0 +1,31 @@
+# ===================================
+#  Form Behavior Config
+# ===================================
+
+# Record name
+name: Lot Batch
+
+# Model Form Field configuration
+form: $/omsb/inventory/models/lotbatch/fields.yaml
+
+# Model Class name
+modelClass: Omsb\Inventory\Models\LotBatch
+
+# Default redirect location
+defaultRedirect: omsb/inventory/lotbatches
+
+# Create page
+create:
+    title: backend::lang.form.create_title
+    redirect: omsb/inventory/lotbatches/update/:id
+    redirectClose: omsb/inventory/lotbatches
+
+# Update page
+update:
+    title: backend::lang.form.update_title
+    redirect: omsb/inventory/lotbatches
+    redirectClose: omsb/inventory/lotbatches
+
+# Preview page
+preview:
+    title: backend::lang.form.preview_title

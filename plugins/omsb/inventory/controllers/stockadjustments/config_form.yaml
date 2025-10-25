@@ -1,0 +1,31 @@
+# ===================================
+#  Form Behavior Config
+# ===================================
+
+# Record name
+name: Stock Adjustment
+
+# Model Form Field configuration
+form: $/omsb/inventory/models/stockadjustment/fields.yaml
+
+# Model Class name
+modelClass: Omsb\Inventory\Models\StockAdjustment
+
+# Default redirect location
+defaultRedirect: omsb/inventory/stockadjustments
+
+# Create page
+create:
+    title: backend::lang.form.create_title
+    redirect: omsb/inventory/stockadjustments/update/:id
+    redirectClose: omsb/inventory/stockadjustments
+
+# Update page
+update:
+    title: backend::lang.form.update_title
+    redirect: omsb/inventory/stockadjustments
+    redirectClose: omsb/inventory/stockadjustments
+
+# Preview page
+preview:
+    title: backend::lang.form.preview_title

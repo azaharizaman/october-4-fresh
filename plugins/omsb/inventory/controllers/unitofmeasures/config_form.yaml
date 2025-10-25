@@ -1,0 +1,35 @@
+# ===================================
+#  Form Behavior Config
+# ===================================
+
+# Record name
+name: Unit Of Measure
+
+# Model Form Field configuration
+form: $/omsb/inventory/models/unitofmeasure/fields.yaml
+
+# Model Class name
+modelClass: Omsb\Inventory\Models\UnitOfMeasure
+
+# Default redirect location
+defaultRedirect: omsb/inventory/unitofmeasures
+
+# Form Design
+design:
+    displayMode: sidebar
+
+# Create page
+create:
+    title: backend::lang.form.create_title
+    redirect: omsb/inventory/unitofmeasures/update/:id
+    redirectClose: omsb/inventory/unitofmeasures
+
+# Update page
+update:
+    title: backend::lang.form.update_title
+    redirect: omsb/inventory/unitofmeasures
+    redirectClose: omsb/inventory/unitofmeasures
+
+# Preview page
+preview:
+    title: backend::lang.form.preview_title

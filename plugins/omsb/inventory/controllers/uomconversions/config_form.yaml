@@ -1,0 +1,31 @@
+# ===================================
+#  Form Behavior Config
+# ===================================
+
+# Record name
+name: U O M Conversion
+
+# Model Form Field configuration
+form: $/omsb/inventory/models/uomconversion/fields.yaml
+
+# Model Class name
+modelClass: Omsb\Inventory\Models\UOMConversion
+
+# Default redirect location
+defaultRedirect: omsb/inventory/uomconversions
+
+# Create page
+create:
+    title: backend::lang.form.create_title
+    redirect: omsb/inventory/uomconversions/update/:id
+    redirectClose: omsb/inventory/uomconversions
+
+# Update page
+update:
+    title: backend::lang.form.update_title
+    redirect: omsb/inventory/uomconversions
+    redirectClose: omsb/inventory/uomconversions
+
+# Preview page
+preview:
+    title: backend::lang.form.preview_title

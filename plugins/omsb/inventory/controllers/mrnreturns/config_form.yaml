@@ -1,0 +1,31 @@
+# ===================================
+#  Form Behavior Config
+# ===================================
+
+# Record name
+name: M R N Return
+
+# Model Form Field configuration
+form: $/omsb/inventory/models/mrnreturn/fields.yaml
+
+# Model Class name
+modelClass: Omsb\Inventory\Models\MRNReturn
+
+# Default redirect location
+defaultRedirect: omsb/inventory/mrnreturns
+
+# Create page
+create:
+    title: backend::lang.form.create_title
+    redirect: omsb/inventory/mrnreturns/update/:id
+    redirectClose: omsb/inventory/mrnreturns
+
+# Update page
+update:
+    title: backend::lang.form.update_title
+    redirect: omsb/inventory/mrnreturns
+    redirectClose: omsb/inventory/mrnreturns
+
+# Preview page
+preview:
+    title: backend::lang.form.preview_title

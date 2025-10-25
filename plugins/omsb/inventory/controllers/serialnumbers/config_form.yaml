@@ -1,0 +1,31 @@
+# ===================================
+#  Form Behavior Config
+# ===================================
+
+# Record name
+name: Serial Number
+
+# Model Form Field configuration
+form: $/omsb/inventory/models/serialnumber/fields.yaml
+
+# Model Class name
+modelClass: Omsb\Inventory\Models\SerialNumber
+
+# Default redirect location
+defaultRedirect: omsb/inventory/serialnumbers
+
+# Create page
+create:
+    title: backend::lang.form.create_title
+    redirect: omsb/inventory/serialnumbers/update/:id
+    redirectClose: omsb/inventory/serialnumbers
+
+# Update page
+update:
+    title: backend::lang.form.update_title
+    redirect: omsb/inventory/serialnumbers
+    redirectClose: omsb/inventory/serialnumbers
+
+# Preview page
+preview:
+    title: backend::lang.form.preview_title

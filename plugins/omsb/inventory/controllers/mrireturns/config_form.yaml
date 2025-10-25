@@ -1,0 +1,31 @@
+# ===================================
+#  Form Behavior Config
+# ===================================
+
+# Record name
+name: M R I Return
+
+# Model Form Field configuration
+form: $/omsb/inventory/models/mrireturn/fields.yaml
+
+# Model Class name
+modelClass: Omsb\Inventory\Models\MRIReturn
+
+# Default redirect location
+defaultRedirect: omsb/inventory/mrireturns
+
+# Create page
+create:
+    title: backend::lang.form.create_title
+    redirect: omsb/inventory/mrireturns/update/:id
+    redirectClose: omsb/inventory/mrireturns
+
+# Update page
+update:
+    title: backend::lang.form.update_title
+    redirect: omsb/inventory/mrireturns
+    redirectClose: omsb/inventory/mrireturns
+
+# Preview page
+preview:
+    title: backend::lang.form.preview_title
