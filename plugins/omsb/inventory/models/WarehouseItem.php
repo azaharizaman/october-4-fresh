@@ -295,7 +295,7 @@ class WarehouseItem extends Model
      */
     public function getAvailableQuantityAttribute(): float
     {
-        return max(0, $this->quantity_on_hand - $this->quantity_reserved);
+        return $this->quantity_on_hand - $this->quantity_reserved;
     }
 
     /**
