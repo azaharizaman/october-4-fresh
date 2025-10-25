@@ -19,11 +19,12 @@ create:
     title: backend::lang.form.create_title
     redirect: omsb/organization/companies/update/:id
     redirectClose: omsb/organization/companies
+    flashSave: Company created successfully!
 
 # Update page
 update:
     title: backend::lang.form.update_title
-    redirect: omsb/organization/companies
+    redirect: omsb/organization/companies/update/:id
     redirectClose: omsb/organization/companies
 
 # Preview page

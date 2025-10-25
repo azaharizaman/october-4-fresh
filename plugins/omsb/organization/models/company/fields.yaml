@@ -24,13 +24,15 @@ fields:
         required: true
         comment: Full company name
         
-    parent_id:
+    parent:
         label: Parent Company
-        type: dropdown
-        placeholder: Select parent company (optional)
+        type: relation
+        nameFrom: display_name
+        emptyOption: -- No Parent Company --
         span: left
-        emptyOption: -- No Parent --
         comment: Select a parent company to create a hierarchy
+        conditions: id != :id
+        defaultSort: name
         
     logo:
         label: Company Logo
