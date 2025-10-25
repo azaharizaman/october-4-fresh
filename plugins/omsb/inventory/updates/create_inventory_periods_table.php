@@ -41,17 +41,13 @@ return new class extends Migration
                 ->constrained('omsb_inventory_inventory_periods')
                 ->nullOnDelete();
             
-            // Foreign key - Closed by staff
-            $table->foreignId('closed_by')
-                ->nullable()
-                ->constrained('omsb_organization_staff')
-                ->nullOnDelete();
+            // Foreign key - Closed by user (backend_users)
+            $table->unsignedInteger('closed_by')->nullable();
+            $table->foreign('closed_by')->references('id')->on('backend_users')->nullOnDelete();
                 
-            // Foreign key - Locked by staff
-            $table->foreignId('locked_by')
-                ->nullable()
-                ->constrained('omsb_organization_staff')
-                ->nullOnDelete();
+            // Foreign key - Locked by user (backend_users)
+            $table->unsignedInteger('locked_by')->nullable();
+            $table->foreign('locked_by')->references('id')->on('backend_users')->nullOnDelete();
             
             // Foreign key - Created by user (backend_users)
             $table->unsignedInteger('created_by');
