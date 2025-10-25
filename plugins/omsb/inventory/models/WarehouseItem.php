@@ -330,12 +330,25 @@ class WarehouseItem extends Model
      * @param float $adjustment Positive for increase, negative for decrease
      * @return bool
      */
-    public function adjustQuantity(float $adjustment): bool
+    /**
+     * Adjust quantity on hand
+     * Note: This should typically be done through InventoryLedger service
+     *
+     * @param float $adjustment Positive for increase, negative for decrease
+     * @param bool|null $allowsNegativeStock Pass warehouse's allows_negative_stock to avoid N+1 queries
+     * @return bool
+     */
+    public function adjustQuantity(float $adjustment, ?bool $allowsNegativeStock = null): bool
     {
         $newQty = $this->quantity_on_hand + $adjustment;
 
         // Check if negative stock is allowed
-        if ($newQty < 0 && !$this->warehouse->allows_negative_stock) {
+        $negativeAllowed = $allowsNegativeStock;
+        if ($negativeAllowed === null) {
+            // fallback to relationship (may trigger query)
+            $negativeAllowed = $this->warehouse ? $this->warehouse->allows_negative_stock : false;
+        }
+        if ($newQty < 0 && !$negativeAllowed) {
             return false;
         }
 
