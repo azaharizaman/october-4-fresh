@@ -138,7 +138,7 @@ class Plugin extends PluginBase
                         'permissions' => ['omsb.inventory.manage_items']
                     ],
                     'separator1' => [
-                        'label' => '─── Operations ───',
+                        'label' => 'OPERATIONS',
                         'counter' => false
                     ],
                     'mrns' => [
@@ -172,7 +172,7 @@ class Plugin extends PluginBase
                         'permissions' => ['omsb.inventory.physical_count']
                     ],
                     'separator2' => [
-                        'label' => '─── Management ───',
+                        'label' => 'MANAGEMENT',
                         'counter' => false
                     ],
                     'stock_reservations' => [
@@ -194,7 +194,7 @@ class Plugin extends PluginBase
                         'permissions' => ['omsb.inventory.lot_serial_tracking']
                     ],
                     'separator3' => [
-                        'label' => '─── Reporting ───',
+                        'label' => 'REPORTING',
                         'counter' => false
                     ],
                     'inventory_ledger' => [
@@ -216,7 +216,7 @@ class Plugin extends PluginBase
                         'permissions' => ['omsb.inventory.inventory_valuation']
                     ],
                     'separator4' => [
-                        'label' => '─── Configuration ───',
+                        'label' => 'CONFIGURATION',
                         'counter' => false
                     ],
                     'unit_of_measures' => [
