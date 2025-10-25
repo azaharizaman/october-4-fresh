@@ -81,23 +81,19 @@ The report widget classes reside inside the reportwidgets directory of a plugin.
 - **Vue Components**: Editor and some modules use Vue for client-side features (see `modules/editor/vuecomponents/`).
 - **External assets**: Themes may use external icon sets, illustrations from [unDraw](https://undraw.co/), and Tailwind plugins.
 - **Data/Audit Trailing and Tracking**: The Feeder plugin provides activity tracking via morphTo relationships - models can have feeds that track user actions (e.g., `$user->first_name created this $model->title`).
-- **Cross-plugin dependencies**: Many plugins reference each other (e.g., Workflow integrates with Organization for staff management, Inventory connects to Procurement for item definitions and to Organization for site/warehouse structure).
+- **Cross-plugin dependencies**: Many plugins reference each other (e.g., Workflow integrates with Organization for staff management, Inventory connects to Procurement for item definitions and manages warehouses within organizational sites).
 
 ## Domain-Specific Plugin Details
 
 ### Organization
-Core plugin managing companies, sites, sites-staff, warehouses with multi-hierarchy structure. Hierarchical staff structure enables multi-level approval workflows where staff with creator permission can create records and staff with approver permission can approve records created by staff under them in the hierarchy. This permission is also identified by transaction type, or in this application is called a Document. A creator or approver may have one or multiple documents that he/she can create and/or approve. Every creator and approver staff must be assigned to a site or sites and each one will have a ceiling of how much a transaction value they can create or approve. Organization plugin also manages the site and warehouse structure where each site may have one or multiple warehouses. Each site with multiple active warehouses must have one designated as the receiving warehouse where all Purchase Order line items are received when fulfilled. This plugin also determin the level of data access based on the site assignment of the logged in staff, thus affecting the depth or report generation, dropdown selection, and data listing throughout the system.
+Core plugin managing companies, sites, and staff with multi-hierarchy structure. Hierarchical staff structure enables multi-level approval workflows where staff with creator permission can create records and staff with approver permission can approve records created by staff under them in the hierarchy. This permission is also identified by transaction type, or in this application is called a Document. A creator or approver may have one or multiple documents that he/she can create and/or approve. Every creator and approver staff must be assigned to a site or sites and each one will have a ceiling of how much a transaction value they can create or approve. Organization plugin manages the organizational structure where each site may have warehouses managed by the Inventory plugin. Sites with inventory operations have their warehouses managed within the Inventory plugin scope, with each site potentially having one designated as the receiving warehouse where all Purchase Order line items are received when fulfilled. This plugin also determines the level of data access based on the site assignment of the logged in staff, thus affecting the depth of report generation, dropdown selection, and data listing throughout the system.
 
 **Key Models:**
-- `Site`: Represents physical locations with optional warehouses; manages GL account definitions for financial integration
-- `Warehouse`: Storage locations within sites; one warehouse per site can be designated as the default receiving warehouse for incoming goods
+- `Site`: Represents physical locations that may have warehouses managed by Inventory plugin; manages GL account definitions for financial integration
 - `Staff`: User accounts with hierarchical relationships for approval workflows
 - `GLAccount`: Chart of accounts entries at site level for financial tracking
 
-**Receiving Warehouse Logic:**
-- Each site with multiple active warehouses must have one designated as the receiving warehouse (configurable by site admin)
-- If no receiving warehouse is explicitly set, the system defaults to the first warehouse returned by the query
-- This designation determines where Purchase Order line items are received when fulfilled
+**Note:** Warehouses are now managed by the Inventory plugin but maintain relationships to organizational sites.
 
 ### Procurement
 Core operations plugin managing the purchase lifecycle from requisition to payment. **Owns the master catalog of all Purchaseable Items** (`PurchaseableItem` model) - the single source of truth for everything that can be purchased.
@@ -149,17 +145,24 @@ Core operations plugin managing the purchase lifecycle from requisition to payme
 - Procurement Budget Report
 
 ### Inventory
-Core operations plugin managing **inventory-type Purchaseable Items only** (items where `is_inventory_item = true`). **References Procurement's `PurchaseableItem` model** for item definitions but maintains its own inventory-specific data.
+Core operations plugin managing **inventory-type Purchaseable Items only** (items where `is_inventory_item = true`) **and all warehouse operations**. **References Procurement's `PurchaseableItem` model** for item definitions but maintains its own inventory-specific data and manages all warehouse entities.
 
 **Key Principle:** *All inventory items are purchaseable items, but not all purchaseable items are inventory items.*
 
+**Warehouse Management:**
+The Inventory plugin now owns and manages all warehouse entities, including:
+- `Warehouse`: Storage locations within organizational sites
+- **Receiving Warehouse Logic**: Each site with multiple active warehouses must have one designated as the receiving warehouse (configurable)
+- **Multi-UOM Support**: Warehouses can handle multiple Units of Measure per item with proper conversion tracking
+
 **Two-Level Item Structure:**
 1. **Master Items** (from `PurchaseableItem` in Procurement): Define "what can be stocked" (code, name, category, unit)
-2. **Warehouse Items (SKUs)**: Define "where and how much" - site-level stock records with:
+2. **Warehouse Items (SKUs)**: Define "where and how much" - warehouse-level stock records with:
    - `purchaseable_item_id`: References master item
-   - `warehouse_id`: References specific warehouse
+   - `warehouse_id`: References specific warehouse (managed by Inventory plugin)
    - `quantity_on_hand`: Current stock level
    - `barcode`, `serial_number` (if applicable)
+   - **Multi-UOM capabilities**: Support for multiple UOMs per warehouse item
    - **Uniqueness constraint**: One `PurchaseableItem` can only be referenced once per warehouse (no duplicates)
 
 **InventoryLedger System:**
@@ -185,6 +188,13 @@ Core operations plugin managing **inventory-type Purchaseable Items only** (item
   - Bypasses Inventory plugin entirely
   - Handled by Procurement plugin for GL recording
 
+**Multi-UOM System:**
+- **Master UOM**: Defined at purchaseable item level (HQ's preferred UOM)
+- **Warehouse UOMs**: Each warehouse can use multiple UOMs per item with conversion factors
+- **UOM Conversion Rules**: Validated conversion paths between UOMs (e.g., 1 Box = 24 Each)
+- **Transaction Tracking**: All movements recorded in both transaction UOM and default UOM
+- **Physical Counting**: Supports counting in multiple UOMs with automatic conversion
+
 **Month-End Processes:**
 - Auto-generates inventory valuation report based on selected costing method (FIFO/LIFO/Average)
 - Records closing balances as next month's opening balances
@@ -192,24 +202,27 @@ Core operations plugin managing **inventory-type Purchaseable Items only** (item
 
 **Integrations:**
 - Procurement plugin: References `PurchaseableItem` for item master data, receives goods via GRN
-- Organization plugin: Site/warehouse structure for stock locations
-- Workflow plugin: Document status transitions (Receiving Stocks, Stock Adjustment, Stock Transfer)
+- Organization plugin: Site/staff structure for locations and hierarchy; warehouses managed by Inventory but belong to organizational sites
+- Workflow plugin: Document status transitions (MRN, MRI, Stock Adjustment, Stock Transfer, Physical Count)
 - Feeder plugin: Activity tracking for inventory documents
 
 **Operations Handled:**
+- Warehouse management (storage locations within sites)
+- Material Received Notes (MRN) - stock entry points
+- Material Request Issuance (MRI) - stock exit points  
 - Stock adjustment (qty corrections)
 - Stock transfer (between warehouses)
-- Stock opname (physical counts)
+- Physical counts (inventory counting)
 - Stock reservation/allocation
-- Picking/packing
-- Delivery order management (for inventory items leaving system)
-- Goods receipt management (for inventory items entering system)
+- Multi-UOM conversions and tracking
+- Inventory period management and month-end closing
 
 **Reports:**
 - Inventory Movement Report
-- Inventory Valuation Report
-- Stock Opname Report
+- Inventory Valuation Report  
+- Physical Count Report
 - Item Usage Report
+- Warehouse Performance Report
 
 ### Registrar
 Document numbering patterns and registration management. Each document type can have its own numbering pattern defined in the Registrar plugin.
