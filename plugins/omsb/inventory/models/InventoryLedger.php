@@ -177,6 +177,12 @@ class InventoryLedger extends Model
             // Auto-calculate total cost if unit cost is provided
             if ($model->unit_cost && !$model->total_cost) {
                 $model->total_cost = abs($model->quantity_change) * $model->unit_cost;
+            } elseif ($model->unit_cost && $model->total_cost) {
+                $expectedTotalCost = abs($model->quantity_change) * $model->unit_cost;
+                // Use bccomp for floating point comparison with 4 decimal places
+                if (bccomp((string)$model->total_cost, (string)$expectedTotalCost, 4) !== 0) {
+                    throw new \Exception('Provided total_cost does not match abs(quantity_change) * unit_cost');
+                }
             }
         });
 
