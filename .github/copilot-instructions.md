@@ -3,24 +3,43 @@
 ## Project Overview
 - This project is a modular OctoberCMS application, extended with custom plugins and themes for the One Medicare Sdn Bhd.
 - Core structure: `modules/` (core features), `plugins/omsb/*` (domain-specific plugins), `themes/` (contain css and site structure definition which is less important since most of the user will be accessing the backend side of OctoberCMS and that part look and feel is defined by the default OctoberCMS Backend theme), and `config/` (environment/configuration).
-- Built on top of OctoberCMS latest version that utilized Laravel 12 with PHP 8.2 and above supported. All custom codebase (other than config) resides within `/plugins/omsb` folder and strictly adhere to OctoberCMS conventions for plugins structure.
+- Built on top of OctoberCMS latest version that utilized Laravel 12 with PHP 8.2 and above supported. All custom codebase (other than config) resides within `/plugins/omsb` folder and strictly adhere to OctoberCMS conventions for plugins structure. Though OctoberCMS is a CMS first, it however includes a customizable and extendable backend administration panel that can be used to build complex business applications, and that is what this project is all about.
+- `/plugins/october/test` is a playground plugin created by the creator of OctoberCMS for testing and demo purposes. It is not part of the production codebase, but can be referenced for learning, code samples, and experimentation as most of the way the code is written following OctoberCMS conventions are included here.
 
 ## Key Architectural Patterns
-- **Modules**: Core features (e.g., `backend`, `cms`, `editor`, `media`, `system`) are in `modules/`. Each module is self-contained with its own controllers, models, assets, and tests.
+- **Modules**: Core features (e.g., `backend`, `cms`, `editor`, `media`, `system`) are in `modules/`. Each module is self-contained with its own controllers, models, assets, and tests. Modules is just like plugins but provided by OctoberCMS core team and served the core functionalities of OctoberCMS itself. For complex backend views, partials and UI/UX along with JS and Ajax implementation can be referred to in these modules when required. Some of the way OctoberCMS handles these UI implementation not even surfaced in the documentation, thus referring to these core modules is very helpful.
 - **Plugins**: Domain-specific logic is in `plugins/omsb/*`. Each plugin follows standardized structure:
   ```
   controllers/     # Lean controllers, request/response handling only (https://docs.octobercms.com/4.x/extend/system/controllers.html)
   services/        # Business logic classes (e.g., AdjustmentService)
   models/          # Eloquent models with validation traits
+  traits/          # Reusable model traits
   behaviors/       # OctoberCMS repeatable controller behaviors or model behaviors (https://docs.octobercms.com/4.x/extend/system/behaviors.html)
   updates/         # Database migration files
   helpers/         # Utility/helper functions (e.g., StaffHelper, WorkflowHelper)
   classes/         # Jobs, events, listeners, abstractions, etc each within its own subfolder
   tests/           # PHPUnit tests extending PluginTestCase
   ```
+  Each plugins may have one or more models and controllers depending on the complexity of the domain it is trying to solve. Always refer to OctoberCMS plugin development documentation for more details (https://docs.octobercms.com/4.x/extend/system/plugins.html). Each model defined in its own class file and often (if scaffolded using `php artisan october:plugin` command) will also comes with a set of columns and field definition that is being used to generate the backend forms and list views automatically by OctoberCMS. These definitions are located in `models/fields.yaml` and `models/columns.yaml` respectively. These YAML files can be further customized to include more fields or columns as required by the business domain. A model can also have many coulmns and fields definition that serve different purposes throughout the application (e.g., a compact view for dropdown selection, a detailed view for full form, etc) and these can be defined in separate YAML files and referenced in the controller as required.
+
+  Each models that implement CRUD operations will often have a corresponding controller that handle the request/response cycle and interact with the model to perform the required operations. Controllers should be kept lean, delegating business logic to service classes located in `services/` folder. This separation of concerns ensures maintainability and testability of the codebase. Use of listeners and events is also encouraged for decoupling components and promoting extensibility. Controllers also responsible in determining the UI/UX experience by defining which views, partials, and assets to be loaded for each backend page. OctoberCMS also provides a powerful javascript framework that can be utilized to enhance the user experience in the backend. This includes the use of AJAX handlers, widgets, and other interactive elements that can be defined within the controller and associated views either through its Data Attributes API or Javascript API. Full documentatuion for these implementation can be found in OctoberCMS documentation (https://docs.octobercms.com/4.x/ajax/attributes-api.html) and https://docs.octobercms.com/4.x/ajax/javascript-api.html. To tie this api to the PHP codebase, define it as a PHP function the page, partial or layout PHP section, or inside CMS components. Handler names should use the onSomething pattern, for example, onName. All handlers support the use of updating partials as part of the AJAX request (https://docs.octobercms.com/4.x/ajax/handlers.html#ajax-handlers).
+
 - **Views**: Backend views use Twig templates located in `views/` within each plugin's controller (https://docs.octobercms.com/4.x/extend/system/views.html).
-- **Themes**: Frontend themes (e.g., `thebakerdev-zenii`) use TailwindCSS and Laravel Mix for asset management. See each theme's `README.md` for build instructions.
-- **Config**: All environment and service configuration is in `config/`.
+- **Themes**: Frontend themes (e.g., `thebakerdev-zenii`) use TailwindCSS and Laravel Mix for asset management. See each theme's `README.md` for build instructions. Themes are non essential for backend-focused applications but can be customized for frontend needs.
+- **Config**: All environment and service configuration is in `config/`. OctoberCMS also allows custom config files per plugin located in each plugin's `config/` folder. this can be benificial for putting some domain specific configuration that is only relevant to that particular plugin that does not change that often or at all. For example, defining some constant values that is used throughout the plugin codebase or enum values. While its possible to store these constant values in the database via a settings model, however if these values are not expected to change that often or at all, its better to define them in the config file for better performance and simplicity. Plugin can access its own config file via the `Config` facade or the `config()` helper function by using the plugin namespace as the prefix. For example, if there is a config file located in `plugins/omsb/procurement/config/settings.php`, it can be accessed via `Config::get('omsb.procurement.settings.some_key')` or `config('omsb.procurement.settings.some_key')` (https://docs.octobercms.com/4.x/extend/settings/file-settings.html#accessing-configuration-values).
+**Settings**: While file based settings or config settings is normally change by technical admin or maintainer of this application, backend user with some administrative role may need to change some settings via the backend UI. For this purpose, plugins may have settings pages defined in `settings/` folder. These settings can be accessed via the OctoberCMS backend settings area and are stored in the database. For such settings that need to be change by user easily from the Settings page, it must be implemented by using Settings Model `System\Classes\SettingsModel` for easy management (https://docs.octobercms.com/4.x/extend/settings/model-settings.html).
+**Dashboards and Reports**: October CMS features a flexible dashboard system capable of hosting multiple dashboards with configurable access. Each dashboard can contain multiple widgets to display various data types. October CMS comes with several widget types, including graph, table and others. The default widgets are sufficiently flexible to cover most common reporting scenarios, such as displaying sales or traffic information. In addition, developers can create new widget types for scenarios where the default widgets do not meet their needs (https://docs.octobercms.com/4.x/extend/dashboards/dash-controller.html).
+
+Report widgets can be used on the backend dashboard and in other backend report containers. Report widgets must be registered in the plugin registration file.
+
+The report widget classes reside inside the reportwidgets directory of a plugin. As any other plugin class, generic widget controllers should belong to the plugin namespace. Similarly to all backend widgets, report widgets use partials and a special directory layout. Example directory layout:
+```
+├── reportwidgets
+|   ├── trafficsources
+|   |   └── partials
+|   |       └── _widget.php  ← Partial File
+|   └── TrafficSources.php  ← Widget Class
+```
 
 ## Developer Workflows
 - **Install dependencies**: Use `composer install` for PHP and `npm install` in theme directories for JS/CSS.
@@ -31,7 +50,7 @@
   - To change the test DB engine, set `useConfigForTesting` in `config/database.php` or override with `config/testing/database.php`.
 - **Database migrations**: Use `php artisan october:migrate` (core) and `php artisan plugin:refresh Vendor.Plugin` (will destroy db data so not to be run on production).
 
-## Project-Specific Conventions
+## Project-Specific Conventions 
 - **Service Layer**: Business logic is extracted into service classes (e.g., `AdjustmentService`, `PurchaseRequestService`) that handle complex operations and maintain separation of concerns.
 - **Model Architecture**: Models use OctoberCMS models traits (https://docs.octobercms.com/4.x/extend/database/traits.html) and follow PHP 8.2 standards with return type declarations. Many models include morphTo relationships for flexible associations.
 - **Plugin structure**: Always use OctoberCMS plugin conventions. OMSB plugins follow modern PHP 8.2 standards with comprehensive PHPDoc blocks.
