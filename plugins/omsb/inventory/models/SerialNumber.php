@@ -369,6 +369,8 @@ class SerialNumber extends Model
         $this->current_holder_id = $newHolderId;
         $this->last_transaction_id = $transactionId;
         
+        // TODO: Consider creating separate SerialNumberTransferHistory model
+        // to avoid unbounded growth of notes field with frequent transfers
         $this->notes = ($this->notes ? $this->notes . "\n\n" : '') . 
                        'Transferred from holder #' . $oldHolderId . ' to #' . $newHolderId . 
                        ' (' . Carbon::now()->toDateTimeString() . ')';

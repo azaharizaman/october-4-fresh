@@ -336,6 +336,7 @@ class InventoryLedger extends Model
 
     /**
      * Create a ledger entry (factory method)
+     * Wraps the operation in a transaction with row-level locking to prevent race conditions
      * 
      * @param array $data Ledger entry data
      * @return self
@@ -347,28 +348,34 @@ class InventoryLedger extends Model
             throw new \InvalidArgumentException('warehouse_item_id and quantity_change are required');
         }
 
-        // Get current balance
-        $warehouseItem = WarehouseItem::find($data['warehouse_item_id']);
-        if (!$warehouseItem) {
-            throw new \InvalidArgumentException('Invalid warehouse item ID');
-        }
+        // Wrap in transaction with row-level locking to prevent race conditions
+        return \DB::transaction(function () use ($data) {
+            // Get current balance with row-level lock
+            $warehouseItem = WarehouseItem::where('id', $data['warehouse_item_id'])
+                ->lockForUpdate()
+                ->first();
+                
+            if (!$warehouseItem) {
+                throw new \InvalidArgumentException('Invalid warehouse item ID');
+            }
 
-        $data['quantity_before'] = $warehouseItem->quantity_on_hand;
-        $data['quantity_after'] = $data['quantity_before'] + $data['quantity_change'];
+            $data['quantity_before'] = $warehouseItem->quantity_on_hand;
+            $data['quantity_after'] = $data['quantity_before'] + $data['quantity_change'];
 
-        // Set transaction date to now if not provided
-        if (!isset($data['transaction_date'])) {
-            $data['transaction_date'] = Carbon::now();
-        }
+            // Set transaction date to now if not provided
+            if (!isset($data['transaction_date'])) {
+                $data['transaction_date'] = Carbon::now();
+            }
 
-        // Create the ledger entry
-        $entry = new self($data);
-        $entry->save();
+            // Create the ledger entry
+            $entry = new self($data);
+            $entry->save();
 
-        // Update warehouse item quantity
-        $warehouseItem->quantity_on_hand = $data['quantity_after'];
-        $warehouseItem->save();
+            // Update warehouse item quantity
+            $warehouseItem->quantity_on_hand = $data['quantity_after'];
+            $warehouseItem->save();
 
-        return $entry;
+            return $entry;
+        });
     }
 }

@@ -137,13 +137,11 @@ class InventoryPeriod extends Model
             'key' => 'previous_period_id'
         ],
         'closer' => [
-            // TODO: Reference to Organization plugin - Staff model
-            'Omsb\Organization\Models\Staff',
+            \Backend\Models\User::class,
             'key' => 'closed_by'
         ],
         'locker' => [
-            // TODO: Reference to Organization plugin - Staff model
-            'Omsb\Organization\Models\Staff',
+            \Backend\Models\User::class,
             'key' => 'locked_by'
         ],
         'creator' => [
@@ -319,21 +317,25 @@ class InventoryPeriod extends Model
             throw new \Exception('Period cannot be closed from current status: ' . $this->status);
         }
 
-        // Lock all ledger entries in this period
-        InventoryLedger::inPeriod($this->id)
-            ->unlocked()
-            ->update(['is_locked' => true]);
+        // Wrap in transaction to ensure atomicity
+        return \DB::transaction(function () {
+            // Lock all ledger entries in this period
+            InventoryLedger::inPeriod($this->id)
+                ->unlocked()
+                ->update(['is_locked' => true]);
 
-        // Update period status
-        $this->status = 'closed';
-        $this->closed_at = Carbon::now();
-        
-        if (BackendAuth::check()) {
-            // TODO: Assumes Organization plugin Staff model exists
-            // $this->closed_by = BackendAuth::getUser()->staff->id;
-        }
+            // Update period status
+            $this->status = 'closed';
+            $this->closed_at = Carbon::now();
+            
+            // Set closed_by to backend user ID (not staff ID)
+            // This matches the created_by pattern used throughout the system
+            if (BackendAuth::check()) {
+                $this->closed_by = BackendAuth::getUser()->id;
+            }
 
-        return $this->save();
+            return $this->save();
+        });
     }
 
     /**
@@ -351,9 +353,10 @@ class InventoryPeriod extends Model
         $this->status = 'locked';
         $this->locked_at = Carbon::now();
         
+        // Set locked_by to backend user ID (not staff ID)
+        // This matches the created_by pattern used throughout the system
         if (BackendAuth::check()) {
-            // TODO: Assumes Organization plugin Staff model exists
-            // $this->locked_by = BackendAuth::getUser()->staff->id;
+            $this->locked_by = BackendAuth::getUser()->id;
         }
 
         return $this->save();

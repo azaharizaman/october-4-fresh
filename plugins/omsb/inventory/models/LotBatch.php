@@ -296,7 +296,7 @@ class LotBatch extends Model
      */
     public function getUtilizationPercentageAttribute(): float
     {
-        if ($this->quantity_received == 0) {
+        if ($this->quantity_received === 0.0) {
             return 0;
         }
         
