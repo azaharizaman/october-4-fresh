@@ -31,16 +31,18 @@ return new class extends Migration
             $table->softDeletes();
             
             // Foreign key - Backend user relationship
-            $table->foreignId('user_id')
-                ->nullable()
-                ->constrained('backend_users')
+            $table->integer('user_id')->nullable()->unsigned();
+            $table->foreign('user_id')
+                ->references('id')
+                ->on('backend_users')
                 ->nullOnDelete();
             
+  
             // Foreign key - Site relationship
-            $table->foreignId('site_id')
-                ->nullable()
-                ->constrained('omsb_organization_sites')
-                ->nullOnDelete();
+                $table->foreignId('site_id')
+                    ->nullable()
+                    ->constrained('omsb_organization_sites')
+                    ->nullOnDelete();
             
             // Foreign key - Company relationship
             $table->foreignId('company_id')

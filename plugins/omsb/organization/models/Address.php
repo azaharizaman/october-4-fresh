@@ -31,6 +31,13 @@ class Address extends Model
     ];
 
     /**
+     * @var array attributes that should be converted to null when empty
+     */
+    protected $nullable = [
+        'company_id'
+    ];
+
+    /**
      * @var array rules for validation
      */
     public $rules = [

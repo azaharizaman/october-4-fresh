@@ -18,6 +18,31 @@ class Staff extends Model
     public $table = 'omsb_organization_staff';
 
     /**
+     * @var array fillable fields
+     */
+    protected $fillable = [
+        'staff_number',
+        'is_manager',
+        'date_join',
+        'date_resigned',
+        'position',
+        'qualification',
+        'contact_no',
+        'user_id',
+        'site_id',
+        'company_id'
+    ];
+
+    /**
+     * @var array attributes that should be converted to null when empty
+     */
+    protected $nullable = [
+        'user_id',
+        'site_id',
+        'company_id'
+    ];
+
+    /**
      * @var array rules for validation
      */
     public $rules = [];

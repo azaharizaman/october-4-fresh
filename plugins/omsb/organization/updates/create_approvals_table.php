@@ -21,8 +21,8 @@ return new class extends Migration
             
             $table->id();
             $table->string('code')->unique();
-            $table->string('document_type'); // e.g., 'purchase_request', 'purchase_order', 'stock_adjustment'
-            $table->string('action'); // e.g., 'approve', 'review', 'authorize'
+            $table->string('document_type', 100); // e.g., 'purchase_request', 'purchase_order', 'stock_adjustment'
+            $table->string('action', 100); // e.g., 'approve', 'review', 'authorize'
             
             // Value limits for approval authority
             $table->decimal('floor_limit', 15, 2)->default(0); // Minimum value this approver can handle
@@ -54,6 +54,7 @@ return new class extends Migration
             
             // Foreign key - Staff relationship
             $table->foreignId('staff_id')
+                ->nullable()
                 ->constrained('omsb_organization_staff')
                 ->cascadeOnDelete();
             

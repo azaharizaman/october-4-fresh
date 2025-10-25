@@ -49,10 +49,27 @@ The report widget classes reside inside the reportwidgets directory of a plugin.
   - Plugin tests use `PluginTestCase` and may require plugin registration/bootstrapping in `setUp()`.
   - To change the test DB engine, set `useConfigForTesting` in `config/database.php` or override with `config/testing/database.php`.
 - **Database migrations**: Use `php artisan october:migrate` (core) and `php artisan plugin:refresh Vendor.Plugin` (will destroy db data so not to be run on production).
+- **Migration Foreign Key Compatibility**: **CRITICAL** - When creating foreign key constraints, ensure the foreign key column type exactly matches the referenced column type. Common mismatches to avoid:
+  - OctoberCMS `backend_users.id` is `INT UNSIGNED` (not `BIGINT UNSIGNED`)
+  - Use `$table->unsignedInteger('user_id')` when referencing `backend_users.id`
+  - Use `$table->foreignId()` only when referencing tables with `BIGINT UNSIGNED` primary keys (created with `$table->id()`)
+  - **Always verify target table structure before creating foreign keys** to prevent "incompatible foreign key assignment" errors
+  - Example of correct foreign key for backend users:
+    ```php
+    $table->unsignedInteger('user_id')->nullable();
+    $table->foreign('user_id')->references('id')->on('backend_users')->nullOnDelete();
+    ```
 
 ## Project-Specific Conventions 
 - **Service Layer**: Business logic is extracted into service classes (e.g., `AdjustmentService`, `PurchaseRequestService`) that handle complex operations and maintain separation of concerns.
 - **Model Architecture**: Models use OctoberCMS models traits (https://docs.octobercms.com/4.x/extend/database/traits.html) and follow PHP 8.2 standards with return type declarations. Many models include morphTo relationships for flexible associations.
+- **Nullable Field Handling**: **CRITICAL** - When a migration field is defined as `nullable()`, the corresponding model **MUST** include that field in the `$nullable` property to prevent "Incorrect integer value" errors. HTML forms send empty strings (`''`) but databases expect `NULL` for nullable foreign keys.
+  - Example: If migration has `$table->foreignId('parent_id')->nullable()`, model must have:
+    ```php
+    protected $nullable = ['parent_id'];
+    ```
+  - Apply to ALL nullable foreign keys: `parent_id`, `company_id`, `site_id`, `user_id`, etc.
+  - Also include nullable decimals, dates, and other fields that can receive empty strings from forms
 - **Plugin structure**: Always use OctoberCMS plugin conventions. OMSB plugins follow modern PHP 8.2 standards with comprehensive PHPDoc blocks.
 - **Testing**: Extend `PluginTestCase` for plugin tests. Register/boot plugins in `setUp()` if testing with dependencies.
 - **Asset management**: Themes use TailwindCSS and Laravel Mix. Edit `tailwind.config.js` for theme customization.

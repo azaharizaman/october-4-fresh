@@ -28,6 +28,13 @@ class Company extends Model
     ];
 
     /**
+     * @var array attributes that should be converted to null when empty
+     */
+    protected $nullable = [
+        'parent_id'
+    ];
+
+    /**
      * @var array rules for validation
      */
     public $rules = [

@@ -18,6 +18,29 @@ class Site extends Model
     public $table = 'omsb_organization_sites';
 
     /**
+     * @var array fillable fields
+     */
+    protected $fillable = [
+        'code',
+        'name',
+        'tel_no',
+        'fax_no',
+        'type',
+        'parent_id',
+        'company_id',
+        'address_id'
+    ];
+
+    /**
+     * @var array attributes that should be converted to null when empty
+     */
+    protected $nullable = [
+        'parent_id',
+        'company_id',
+        'address_id'
+    ];
+
+    /**
      * @var array rules for validation
      */
     public $rules = [];
