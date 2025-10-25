@@ -1,6 +1,6 @@
 <div data-control="toolbar loader-container">
     <a
-        href="<?= Backend::url('omsb/organization/sitecontroller/create') ?>"
+        href="<?= Backend::url('omsb/organization/sites/create') ?>"
         class="btn btn-primary">
         <i class="icon-plus"></i>
         <?= __("New :name", ['name' => 'Site Controller']) ?>

@@ -56,12 +56,14 @@ class Plugin extends PluginBase
      */
     public function registerPermissions()
     {
-        return []; // Remove this line to activate
-
         return [
-            'omsb.organization.some_permission' => [
+            'omsb.organization.companies' => [
                 'tab' => 'Organization',
-                'label' => 'Some permission'
+                'label' => 'Manage Companies'
+            ],
+            'omsb.organization.sites' => [
+                'tab' => 'Organization',
+                'label' => 'Manage Sites'
             ],
         ];
     }
@@ -87,9 +89,9 @@ class Plugin extends PluginBase
                     ],
                     'sites' => [
                         'label' => 'Sites',
-                        'url' => Backend::url('omsb/organization/sitecontroller'),
+                        'url' => Backend::url('omsb/organization/sites'),
                         'icon' => 'icon-map-marker',
-                        'permissions' => ['omsb.organization.sitecontroller']
+                        'permissions' => ['omsb.organization.sites']
                     ]
                 ]
             ],

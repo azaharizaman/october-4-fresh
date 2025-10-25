@@ -6,3 +6,91 @@ fields:
     id:
         label: ID
         disabled: true
+        span: left
+        
+    code:
+        label: Site Code
+        type: text
+        placeholder: Enter unique site code
+        span: left
+        required: true
+        comment: Unique identifier for the site
+        
+    name:
+        label: Site Name
+        type: text
+        placeholder: Enter site name
+        span: right
+        required: true
+        comment: Full site name
+        
+    company:
+        label: Company
+        type: relation
+        nameFrom: display_name
+        emptyOption: -- Select Company --
+        span: left
+        required: true
+        comment: Select the company this site belongs to
+        
+    parent:
+        label: Parent Site
+        type: relation
+        nameFrom: display_name
+        emptyOption: -- No Parent Site --
+        span: right
+        comment: Select a parent site to create a hierarchy
+        conditions: id != :id
+        defaultSort: name
+        
+    type:
+        label: Site Type
+        type: dropdown
+        options:
+            headquarters: Headquarters
+            branch: Branch
+            warehouse: Warehouse
+            office: Office
+            retail: Retail
+            manufacturing: Manufacturing
+        span: left
+        required: true
+        comment: Type of site operation
+        
+    tel_no:
+        label: Telephone Number
+        type: text
+        placeholder: Enter telephone number
+        span: right
+        comment: Main telephone number for the site
+        
+    fax_no:
+        label: Fax Number
+        type: text
+        placeholder: Enter fax number
+        span: left
+        comment: Fax number for the site (optional)
+        
+    address:
+        label: Address
+        type: relation
+        nameFrom: full_address
+        emptyOption: -- Select Address --
+        span: right
+        comment: Physical address of the site
+        
+secondaryTabs:
+    fields:
+        children:
+            label: Child Sites
+            type: partial
+            path: $/omsb/organization/controllers/sites/_children.php
+            tab: Child Sites
+            comment: View child sites in hierarchy
+            
+        warehouses:
+            label: Warehouses
+            type: partial  
+            path: $/omsb/organization/controllers/sites/_warehouses.php
+            tab: Warehouses
+            comment: Manage warehouses at this site

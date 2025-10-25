@@ -13,6 +13,7 @@ columns:
         label: Code
         searchable: true
         sortable: true
+        width: 120
         
     name:
         label: Name
@@ -23,17 +24,44 @@ columns:
         label: Type
         searchable: true
         sortable: true
+        width: 120
         
     company:
         label: Company
         relation: company
         select: name
         searchable: true
-        sortable: false
+        sortable: true
+        
+    parent:
+        label: Parent Site
+        relation: parent
+        select: name
+        searchable: true
+        sortable: true
+        emptyValue: -- No Parent --
+        
+    tel_no:
+        label: Phone
+        searchable: true
+        sortable: true
+        width: 120
         
     address:
-        label: Address
+        label: City
         relation: address
         select: address_city
         searchable: true
-        sortable: false
+        sortable: true
+        
+    created_at:
+        label: Created At
+        type: datetime
+        sortable: true
+        width: 160
+        
+    updated_at:
+        label: Updated At
+        type: datetime
+        sortable: true
+        width: 160

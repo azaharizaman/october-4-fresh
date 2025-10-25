@@ -63,4 +63,47 @@ class Site extends Model
         'children' => [Site::class, 'key' => 'parent_id'],
         'warehouses' => [\Omsb\Inventory\Models\Warehouse::class]
     ];
+
+    /**
+     * Get the display name for the site
+     */
+    public function getDisplayNameAttribute(): string
+    {
+        return $this->code . ' - ' . $this->name;
+    }
+
+    /**
+     * Options for parent site dropdown
+     */
+    public function getParentIdOptions(): array
+    {
+        // Exclude self and children to prevent circular references
+        return self::where('id', '!=', $this->id ?? 0)
+            ->whereNull('deleted_at')
+            ->orderBy('name')
+            ->pluck('display_name', 'id')
+            ->toArray();
+    }
+
+    /**
+     * Options for company dropdown
+     */
+    public function getCompanyIdOptions(): array
+    {
+        return Company::whereNull('deleted_at')
+            ->orderBy('name')
+            ->pluck('display_name', 'id')
+            ->toArray();
+    }
+
+    /**
+     * Options for address dropdown
+     */
+    public function getAddressIdOptions(): array
+    {
+        return Address::whereNull('deleted_at')
+            ->orderBy('address_city')
+            ->pluck('full_address', 'id')
+            ->toArray();
+    }
 }

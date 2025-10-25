@@ -1,0 +1,30 @@
+# ===================================
+#  Relation Behavior Config
+# ===================================
+
+# Child Sites Relation
+children:
+    label: Child Sites
+    view:
+        list: $/omsb/organization/models/site/columns.yaml
+        toolbarButtons: add|remove
+        showSearch: true
+        showSorting: true
+        recordsPerPage: 10
+    manage:
+        list: $/omsb/organization/models/site/columns.yaml
+        form: $/omsb/organization/models/site/fields.yaml
+        recordsPerPage: 10
+
+# Warehouses Relation (if Inventory plugin exists)
+warehouses:
+    label: Warehouses
+    view:
+        list: $/omsb/inventory/models/warehouse/columns.yaml
+        toolbarButtons: create|delete
+        showSearch: true
+        showSorting: true
+        recordsPerPage: 10
+    manage:
+        form: $/omsb/inventory/models/warehouse/fields.yaml
+        recordsPerPage: 10

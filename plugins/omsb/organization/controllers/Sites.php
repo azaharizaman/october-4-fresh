@@ -4,15 +4,16 @@ use BackendMenu;
 use Backend\Classes\Controller;
 
 /**
- * Site Controller Backend Controller
+ * Sites Backend Controller
  *
  * @link https://docs.octobercms.com/4.x/extend/system/controllers.html
  */
-class SiteController extends Controller
+class Sites extends Controller
 {
     public $implement = [
         \Backend\Behaviors\FormController::class,
         \Backend\Behaviors\ListController::class,
+        \Backend\Behaviors\RelationController::class,
     ];
 
     /**
@@ -26,9 +27,14 @@ class SiteController extends Controller
     public $listConfig = 'config_list.yaml';
 
     /**
+     * @var string relationConfig file
+     */
+    public $relationConfig = 'config_relation.yaml';
+
+    /**
      * @var array required permissions
      */
-    public $requiredPermissions = ['omsb.organization.sitecontroller'];
+    public $requiredPermissions = ['omsb.organization.sites'];
 
     /**
      * __construct the controller
@@ -37,6 +43,6 @@ class SiteController extends Controller
     {
         parent::__construct();
 
-        BackendMenu::setContext('Omsb.Organization', 'organization', 'sitecontroller');
+        BackendMenu::setContext('Omsb.Organization', 'organization', 'sites');
     }
 }

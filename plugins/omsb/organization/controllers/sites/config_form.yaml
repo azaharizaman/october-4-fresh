@@ -3,7 +3,7 @@
 # ===================================
 
 # Record name
-name: Site Controller
+name: Site
 
 # Model Form Field configuration
 form: $/omsb/organization/models/site/fields.yaml
@@ -23,7 +23,7 @@ create:
 # Update page
 update:
     title: backend::lang.form.update_title
-    redirect: omsb/organization/sites
+    redirect: omsb/organization/sites/update/:id
     redirectClose: omsb/organization/sites
 
 # Preview page
