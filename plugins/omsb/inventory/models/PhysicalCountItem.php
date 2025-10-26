@@ -88,7 +88,7 @@ class PhysicalCountItem extends Model
 
     public function getVariancePercentageAttribute(): float
     {
-        if ($this->system_quantity == 0) {
+        if ($this->system_quantity === 0) {
             return $this->counted_quantity > 0 ? 100 : 0;
         }
         return ($this->variance / $this->system_quantity) * 100;
