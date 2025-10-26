@@ -1,0 +1,416 @@
+<?php
+/**
+ * Feed Sidebar Partial
+ * 
+ * Displays activity feed for a specific document in a sidebar.
+ * 
+ * Usage:
+ * <?= $this->makePartial('$/omsb/feeder/partials/_feed_sidebar.htm', [
+ *     'feedableType' => get_class($model),
+ *     'feedableId' => $model->id,
+ *     'title' => 'Activity Feed' // Optional, defaults to 'Activity Feed'
+ * ]) ?>
+ * 
+ * Required variables:
+ * - $feedableType: The fully qualified class name of the model
+ * - $feedableId: The ID of the model instance
+ * 
+ * Optional variables:
+ * - $title: Custom title for the feed section (default: 'Activity Feed')
+ * - $limit: Maximum number of feed items to display (default: 50)
+ */
+
+use Omsb\Feeder\Models\Feed;
+use Carbon\Carbon;
+
+// Set default values
+$title = $title ?? 'Activity Feed';
+$limit = $limit ?? 50;
+
+// Validate required parameters
+if (!isset($feedableType) || !isset($feedableId)) {
+    return;
+}
+
+// Fetch feeds for the current document using the static method to avoid duplication
+$feeds = Feed::getForDocument($feedableType, $feedableId, $limit);
+
+/**
+ * Get user initials from a backend user
+ */
+function getUserInitials($user) {
+    if (!$user) {
+        return 'SY'; // System
+    }
+    
+    $firstInitial = $user->first_name ? mb_substr($user->first_name, 0, 1) : '';
+    $lastInitial = $user->last_name ? mb_substr($user->last_name, 0, 1) : '';
+    
+    $initials = strtoupper($firstInitial . $lastInitial);
+    return $initials !== '' ? $initials : 'U'; // Fallback to 'U' if both initials are empty
+}
+
+/**
+ * Get avatar color based on user ID
+ */
+function getAvatarColor($userId) {
+    if (!$userId) {
+        return 'bg-secondary'; // System color
+    }
+    
+    $colors = [
+        'bg-primary',
+        'bg-success',
+        'bg-info',
+        'bg-warning',
+        'bg-danger',
+        'bg-secondary',
+    ];
+    
+    return $colors[$userId % count($colors)];
+}
+
+/**
+ * Format timestamp to relative time
+ */
+function formatTimestamp($timestamp) {
+    $carbon = Carbon::parse($timestamp);
+    $diff = $carbon->diffForHumans();
+    
+    return $diff;
+}
+
+/**
+ * Get action badge class based on action type
+ */
+function getActionBadgeClass($actionType) {
+    $actionType = strtolower($actionType);
+    
+    $badgeMap = [
+        'create' => 'badge-primary',
+        'update' => 'badge-info',
+        'delete' => 'badge-danger',
+        'approve' => 'badge-success',
+        'reject' => 'badge-danger',
+        'submit' => 'badge-info',
+        'review' => 'badge-warning',
+        'complete' => 'badge-success',
+        'cancel' => 'badge-secondary',
+        'comment' => 'badge-light',
+        'verified' => 'badge-success',
+        'verifying' => 'badge-info',
+        'recommended' => 'badge-success',
+        'approving' => 'badge-warning',
+    ];
+    
+    return $badgeMap[$actionType] ?? 'badge-secondary';
+}
+
+/**
+ * Format action type to human-readable text
+ */
+function formatActionType($actionType) {
+    return ucfirst(str_replace('_', ' ', $actionType));
+}
+?>
+
+<div class="feed-sidebar-container">
+    <div class="feed-sidebar-header">
+        <h4><?= e($title) ?></h4>
+    </div>
+    
+    <div class="feed-sidebar-content">
+        <?php if ($feeds->isEmpty()): ?>
+            <div class="feed-empty-state">
+                <p class="text-muted">No activity yet.</p>
+            </div>
+        <?php else: ?>
+            <div class="feed-timeline">
+                <?php foreach ($feeds as $feed): ?>
+                    <div class="feed-item">
+                        <div class="feed-avatar">
+                            <div class="avatar-circle <?= getAvatarColor($feed->user_id) ?>">
+                                <?= e(getUserInitials($feed->user)) ?>
+                            </div>
+                        </div>
+                        
+                        <div class="feed-content">
+                            <div class="feed-header">
+                                <span class="feed-user">
+                                    <?= $feed->user 
+                                        ? e($feed->user->first_name . ' ' . $feed->user->last_name) 
+                                        : 'System' ?>
+                                </span>
+                                <span class="feed-action">
+                                    <?= e(formatActionType($feed->action_type)) ?>
+                                </span>
+                            </div>
+                            
+                            <?php if ($feed->title): ?>
+                                <div class="feed-title">
+                                    <?= e($feed->title) ?>
+                                </div>
+                            <?php endif ?>
+                            
+                            <?php if ($feed->body): ?>
+                                <div class="feed-body">
+                                    <?= e($feed->body) ?>
+                                </div>
+                            <?php endif ?>
+                            
+                            <?php if ($feed->additional_data): ?>
+                                <div class="feed-metadata">
+                                    <?php
+                                    $data = $feed->additional_data;
+                                    
+                                    // Display status transitions
+                                    if (isset($data['status_from']) && isset($data['status_to'])): ?>
+                                        <span class="badge <?= getActionBadgeClass($data['status_from']) ?>">
+                                            <?= e(ucfirst($data['status_from'])) ?>
+                                        </span>
+                                        <i class="icon-arrow-right"></i>
+                                        <span class="badge <?= getActionBadgeClass($data['status_to']) ?>">
+                                            <?= e(ucfirst($data['status_to'])) ?>
+                                        </span>
+                                    <?php endif; ?>
+                                    
+                                    <?php if (isset($data['new_status'])): ?>
+                                        <span class="badge <?= getActionBadgeClass($data['new_status']) ?>">
+                                            <?= e(ucfirst($data['new_status'])) ?>
+                                        </span>
+                                    <?php endif; ?>
+                                    
+                                    <?php if (isset($data['total_amount'])): ?>
+                                        <span class="feed-amount">
+                                            Amount: <?= isset($data['currency']) ? e($data['currency']) : 'RM' ?> <?= number_format($data['total_amount'], 2) ?>
+                                        </span>
+                                    <?php endif; ?>
+                                </div>
+                            <?php endif ?>
+                            
+                            <div class="feed-timestamp">
+                                <small class="text-muted">
+                                    <?= formatTimestamp($feed->created_at) ?>
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        <?php endif; ?>
+    </div>
+</div>
+
+<style>
+.feed-sidebar-container {
+    background: #fff;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+
+.feed-sidebar-header {
+    padding: 15px 20px;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.feed-sidebar-header h4 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+}
+
+.feed-sidebar-content {
+    padding: 15px 20px;
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+.feed-empty-state {
+    text-align: center;
+    padding: 30px 0;
+}
+
+.feed-timeline {
+    position: relative;
+}
+
+.feed-item {
+    display: flex;
+    margin-bottom: 20px;
+    position: relative;
+}
+
+.feed-item:last-child {
+    margin-bottom: 0;
+}
+
+.feed-item:not(:last-child)::before {
+    content: '';
+    position: absolute;
+    left: 19px;
+    top: 40px;
+    bottom: -20px;
+    width: 2px;
+    background: #e9ecef;
+}
+
+.feed-avatar {
+    flex-shrink: 0;
+    margin-right: 12px;
+}
+
+.avatar-circle {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+    font-size: 14px;
+    position: relative;
+    z-index: 1;
+}
+
+.avatar-circle.bg-primary {
+    background-color: #3498db;
+}
+
+.avatar-circle.bg-success {
+    background-color: #2ecc71;
+}
+
+.avatar-circle.bg-info {
+    background-color: #1abc9c;
+}
+
+.avatar-circle.bg-warning {
+    background-color: #f39c12;
+}
+
+.avatar-circle.bg-danger {
+    background-color: #e74c3c;
+}
+
+.avatar-circle.bg-secondary {
+    background-color: #95a5a6;
+}
+
+.feed-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.feed-header {
+    margin-bottom: 4px;
+}
+
+.feed-user {
+    font-weight: 600;
+    color: #333;
+    margin-right: 5px;
+}
+
+.feed-action {
+    color: #666;
+    font-size: 14px;
+}
+
+.feed-title {
+    font-weight: 500;
+    color: #333;
+    margin-bottom: 4px;
+    font-size: 14px;
+}
+
+.feed-body {
+    color: #666;
+    font-size: 13px;
+    margin-bottom: 8px;
+    line-height: 1.4;
+}
+
+.feed-metadata {
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.feed-metadata .badge {
+    font-size: 11px;
+    padding: 3px 8px;
+    font-weight: 500;
+}
+
+.feed-metadata .badge-primary {
+    background-color: #3498db;
+}
+
+.feed-metadata .badge-success {
+    background-color: #2ecc71;
+}
+
+.feed-metadata .badge-info {
+    background-color: #1abc9c;
+}
+
+.feed-metadata .badge-warning {
+    background-color: #f39c12;
+}
+
+.feed-metadata .badge-danger {
+    background-color: #e74c3c;
+}
+
+.feed-metadata .badge-secondary {
+    background-color: #95a5a6;
+}
+
+.feed-metadata .badge-light {
+    background-color: #ecf0f1;
+    color: #333;
+}
+
+.feed-metadata .icon-arrow-right {
+    font-size: 12px;
+    color: #95a5a6;
+}
+
+.feed-amount {
+    color: #666;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.feed-timestamp {
+    margin-top: 4px;
+}
+
+.feed-timestamp small {
+    font-size: 12px;
+}
+
+/* Scrollbar styling */
+.feed-sidebar-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.feed-sidebar-content::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.feed-sidebar-content::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 3px;
+}
+
+.feed-sidebar-content::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+</style>

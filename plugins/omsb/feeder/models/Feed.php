@@ -148,4 +148,22 @@ class Feed extends Model
             throw new \Exception('Feed records cannot be modified once created.');
         }
     }
+
+    /**
+     * Get feeds for a specific model instance
+     *
+     * @param string $feedableType Fully qualified class name
+     * @param int $feedableId Model instance ID
+     * @param int $limit Maximum number of feeds to retrieve
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public static function getForDocument(string $feedableType, int $feedableId, int $limit = 50)
+    {
+        return static::where('feedable_type', $feedableType)
+            ->where('feedable_id', $feedableId)
+            ->with('user')
+            ->orderBy('created_at', 'desc')
+            ->limit($limit)
+            ->get();
+    }
 }

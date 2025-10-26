@@ -62,6 +62,12 @@ The Feed model tracks user activities using polymorphic (morphTo) relationships,
 - Prevents modification of feed records after creation
 - Throws exception if attempting to modify existing record
 
+`getForDocument(string $feedableType, int $feedableId, int $limit = 50)`
+- Static method to retrieve feeds for a specific model instance
+- Returns feeds ordered by created_at descending
+- Eager loads user relationships
+- Usage: `Feed::getForDocument(PurchaseRequest::class, $prId, 25)`
+
 **Validation Rules:**
 - `action_type`: Required, string, maximum 50 characters
 - `feedable_type`: Required, string, maximum 255 characters
@@ -98,6 +104,94 @@ The Feeder plugin does not provide a dedicated backend navigation menu. Feed rec
 - `user_id` references `backend_users.id` with NULL ON DELETE
 
 ## Usage Examples
+
+### Displaying Feed in a Sidebar
+
+The Feeder plugin provides a reusable sidebar partial that can be included in any backend form to display activity feeds for the current document.
+
+#### Basic Usage
+
+Add the following code to your controller's view file (e.g., `update.php` or `preview.php`):
+
+```php
+<?= $this->makePartial('$/omsb/feeder/partials/_feed_sidebar.htm', [
+    'feedableType' => get_class($formModel),
+    'feedableId' => $formModel->id,
+]) ?>
+```
+
+#### Advanced Usage with Custom Title and Limit
+
+```php
+<?= $this->makePartial('$/omsb/feeder/partials/_feed_sidebar.htm', [
+    'feedableType' => 'Omsb\Procurement\Models\PurchaseRequest',
+    'feedableId' => $model->id,
+    'title' => 'Purchase Request Activity',
+    'limit' => 100,
+]) ?>
+```
+
+#### Integration in Form Config with Sidebar
+
+In your `config_form.yaml`, you can add the feed sidebar using the `secondaryTabs` or `outside` fields:
+
+```yaml
+# config_form.yaml
+secondaryTabs:
+    stretch: true
+    fields:
+        # ... your other tabs ...
+        
+        _feed_sidebar:
+            type: partial
+            path: $/omsb/feeder/partials/_feed_sidebar.htm
+            context: [update, preview]
+            tab: Activity
+            cssClass: feed-sidebar-tab
+```
+
+Or include it directly in your view file sidebar:
+
+```php
+<!-- In your update.php or preview.php -->
+<div class="layout">
+    <div class="layout-row">
+        <!-- Main content -->
+        <div class="layout-cell">
+            <?= $this->formRender() ?>
+        </div>
+        
+        <!-- Sidebar with feed -->
+        <div class="layout-cell layout-sidebar">
+            <?= $this->makePartial('$/omsb/feeder/partials/_feed_sidebar.htm', [
+                'feedableType' => get_class($formModel),
+                'feedableId' => $formModel->id,
+            ]) ?>
+        </div>
+    </div>
+</div>
+```
+
+#### Partial Parameters
+
+Required:
+- `feedableType` (string): Fully qualified class name of the model (e.g., `Omsb\Procurement\Models\PurchaseRequest`)
+- `feedableId` (int): ID of the model instance
+
+Optional:
+- `title` (string): Custom title for the feed section (default: 'Activity Feed')
+- `limit` (int): Maximum number of feed items to display (default: 50)
+
+#### Features
+
+The feed sidebar partial automatically displays:
+- User avatars with initials and color coding
+- Action descriptions (created, updated, approved, etc.)
+- Timestamps in relative format (e.g., "1 month ago")
+- Status transitions with colored badges
+- Optional title and body text for comments/notes
+- Additional metadata like amounts, document numbers
+- Vertical timeline view with connecting lines
 
 ### Recording a Simple Activity
 
