@@ -131,51 +131,68 @@ class DocumentNumberPattern extends Model
 
     /**
      * Generate next document number
+     * 
+     * Uses database-level locking to prevent race conditions when multiple
+     * concurrent requests attempt to generate document numbers simultaneously.
      */
     public function generateNumber(array $variables = []): string
     {
-        // Check if reset is needed
-        $this->checkAndResetIfNeeded();
-        
-        // Get the next number
-        $number = $this->next_number;
-        
-        // Prepare replacements
-        $replacements = array_merge([
-            '{YYYY}' => Carbon::now()->format('Y'),
-            '{YY}' => Carbon::now()->format('y'),
-            '{MM}' => Carbon::now()->format('m'),
-            '{DD}' => Carbon::now()->format('d'),
-            '{DOCTYPE}' => $this->document_type->code,
-            '{SITE}' => $this->site ? $this->site->code : '',
-            '{#####}' => str_pad($number, $this->number_length, '0', STR_PAD_LEFT)
-        ], $variables);
-        
-        // Replace placeholders in pattern
-        $documentNumber = $this->pattern;
-        
-        foreach ($replacements as $placeholder => $value) {
-            $documentNumber = str_replace($placeholder, $value, $documentNumber);
-        }
-        
-        // Add prefix and suffix if set
-        if ($this->prefix) {
-            $documentNumber = $this->prefix . $documentNumber;
-        }
-        
-        if ($this->suffix) {
-            $documentNumber = $documentNumber . $this->suffix;
-        }
-        
-        // Increment next_number
-        $this->next_number = $number + 1;
-        $this->save();
-        
-        return $documentNumber;
+        return \Db::transaction(function () use ($variables) {
+            // Acquire pessimistic lock on this row to prevent race conditions
+            $pattern = self::where('id', $this->id)->lockForUpdate()->first();
+            
+            // Check if reset is needed (pass the locked instance)
+            $pattern->checkAndResetIfNeeded();
+            
+            // Get the next number from the locked instance
+            $number = $pattern->next_number;
+            
+            // Prepare replacements
+            $replacements = array_merge([
+                '{YYYY}' => Carbon::now()->format('Y'),
+                '{YY}' => Carbon::now()->format('y'),
+                '{MM}' => Carbon::now()->format('m'),
+                '{DD}' => Carbon::now()->format('d'),
+                '{DOCTYPE}' => $pattern->document_type->code,
+                '{SITE}' => $pattern->site ? $pattern->site->code : '',
+                '{#####}' => str_pad($number, $pattern->number_length, '0', STR_PAD_LEFT)
+            ], $variables);
+            
+            // Replace placeholders in pattern
+            $documentNumber = $pattern->pattern;
+            
+            foreach ($replacements as $placeholder => $value) {
+                $documentNumber = str_replace($placeholder, $value, $documentNumber);
+            }
+            
+            // Add prefix and suffix if set
+            if ($pattern->prefix) {
+                $documentNumber = $pattern->prefix . $documentNumber;
+            }
+            
+            if ($pattern->suffix) {
+                $documentNumber = $pattern->suffix . $documentNumber;
+            }
+            
+            // Atomically increment next_number
+            $pattern->next_number = $number + 1;
+            $pattern->save();
+            
+            // Update current instance with new values
+            $this->next_number = $pattern->next_number;
+            $this->current_year = $pattern->current_year;
+            $this->current_month = $pattern->current_month;
+            
+            return $documentNumber;
+        });
     }
 
     /**
      * Check if reset is needed based on interval
+     * 
+     * Note: This method modifies the instance but does not save.
+     * It's designed to be called within a transaction where the caller
+     * will handle the save operation.
      */
     protected function checkAndResetIfNeeded(): void
     {
@@ -187,7 +204,6 @@ class DocumentNumberPattern extends Model
             if ($this->current_year !== $currentYear) {
                 $this->next_number = 1;
                 $this->current_year = $currentYear;
-                $this->save();
             }
         }
         elseif ($this->reset_interval === 'monthly') {
@@ -198,7 +214,6 @@ class DocumentNumberPattern extends Model
                 $this->next_number = 1;
                 $this->current_year = $currentYear;
                 $this->current_month = $currentMonth;
-                $this->save();
             }
         }
     }
