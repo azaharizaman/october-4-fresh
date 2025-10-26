@@ -267,7 +267,7 @@ class MriItem extends Model
      */
     public function getVariancePercentageAttribute(): float
     {
-        if ($this->requested_quantity == 0) {
+        if ($this->requested_quantity === 0) {
             return 0;
         }
         return ($this->variance / $this->requested_quantity) * 100;
