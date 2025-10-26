@@ -1,0 +1,46 @@
+# ===================================
+#  List Column Definitions
+# ===================================
+
+columns:
+    id:
+        label: ID
+        searchable: true
+        sortable: true
+        width: 80px
+    
+    user:
+        label: User
+        relation: user
+        select: concat(first_name, ' ', last_name)
+        searchable: true
+        sortable: true
+    
+    action_type:
+        label: Action
+        searchable: true
+        sortable: true
+        width: 120px
+    
+    feedable_type:
+        label: Model Type
+        searchable: true
+        sortable: true
+    
+    feedable_id:
+        label: Model ID
+        searchable: true
+        sortable: true
+        width: 100px
+    
+    description:
+        label: Description
+        searchable: false
+        sortable: false
+    
+    created_at:
+        label: Date
+        type: datetime
+        searchable: false
+        sortable: true
+        width: 180px
