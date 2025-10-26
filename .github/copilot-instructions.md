@@ -1,5 +1,48 @@
 # Copilot Instructions for oc-polaris
 
+## Quick Start Commands
+
+### Essential Commands
+```bash
+# Install PHP dependencies
+composer install
+
+# Install JavaScript dependencies (for themes)
+npm install
+
+# Run tests
+composer test
+# OR
+phpunit
+
+# Lint code
+composer lint
+# OR
+phpcs
+
+# Build frontend assets (in theme directory)
+npm run build
+# OR for development
+npm run dev
+
+# Watch for changes (in theme directory)
+npm run watch
+
+# Database migrations
+php artisan october:migrate
+
+# Refresh a plugin (WARNING: destroys data)
+php artisan plugin:refresh Vendor.Plugin
+```
+
+### Development Server
+```bash
+# Start development server
+php artisan serve
+
+# Default URL: http://localhost:8000
+```
+
 ## Project Overview
 - This project is a modular OctoberCMS application, extended with custom plugins and themes for the One Medicare Sdn Bhd.
 - Core structure: `modules/` (core features), `plugins/omsb/*` (domain-specific plugins), `themes/` (contain css and site structure definition which is less important since most of the user will be accessing the backend side of OctoberCMS and that part look and feel is defined by the default OctoberCMS Backend theme), and `config/` (environment/configuration).
@@ -397,6 +440,63 @@ public $rules = [
    - Status transitions must follow Workflow definitions
    - Rejected documents require reason comments
    - Overdue approvals auto-revert to Draft after configured days
+
+## Troubleshooting
+
+### Common Issues
+
+**Foreign Key Compatibility Errors:**
+- Ensure foreign key column type matches referenced column type exactly
+- OctoberCMS `backend_users.id` is `INT UNSIGNED`, not `BIGINT UNSIGNED`
+- Use `$table->unsignedInteger('user_id')` for backend user references
+- Use `$table->foreignId()` only for tables with `BIGINT UNSIGNED` primary keys
+
+**Nullable Field Errors ("Incorrect integer value"):**
+- When migration has `nullable()`, model MUST include field in `$nullable` array
+- HTML forms send empty strings, but databases expect `NULL` for nullable foreign keys
+- Example: `protected $nullable = ['parent_id', 'company_id', 'site_id'];`
+
+**Missing Modules/Vendor:**
+- Run `composer install` to install dependencies
+- Modules are installed via Composer as OctoberCMS packages
+
+**Test Bootstrap Not Found:**
+- Ensure `modules/system/tests/bootstrap.php` exists
+- Run `composer install` to populate modules directory
+
+**Asset Build Failures:**
+- Navigate to theme directory first: `cd themes/[theme-name]`
+- Run `npm install` before building
+- Use `npm run dev` for development builds
+
+### Task Suitability
+
+**Copilot Coding Agent is Best For:**
+- Bug fixes in existing code
+- Adding new fields to models and migrations
+- Creating new CRUD operations following existing patterns
+- Updating documentation
+- Writing tests for existing functionality
+- Implementing workflow status transitions
+- Adding validation rules
+- Creating report widgets following existing patterns
+- Small UI improvements in backend views
+
+**Approach with Caution:**
+- Large-scale refactoring across multiple plugins
+- Changes to core business logic (Inventory ledger, Approval workflows)
+- Security-sensitive code (authentication, authorization)
+- Complex cross-plugin integrations
+- Changes affecting data integrity (e.g., `is_inventory_item` flag logic)
+- Month-end closing procedures
+- Critical financial calculations
+
+**Always:**
+- Review generated migrations for foreign key compatibility
+- Test changes with existing data scenarios
+- Verify nullable field handling in models
+- Check approval hierarchy constraints for workflow changes
+- Validate inventory ledger double-entry logic remains intact
 
 ## References
 - See `README.md` in root, themes, and plugins for more details
