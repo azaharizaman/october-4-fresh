@@ -187,7 +187,11 @@ class MrnItem extends Model
             }
             
             // If conversion factor not set, calculate it
-            if (!$model->conversion_factor_used && $model->received_quantity_in_uom > 0) {
+            if (
+                !$model->conversion_factor_used
+                && $model->received_quantity_in_uom !== null
+                && $model->received_quantity_in_uom > 0
+            ) {
                 $model->conversion_factor_used = $model->received_quantity_in_default_uom / $model->received_quantity_in_uom;
             }
         });
