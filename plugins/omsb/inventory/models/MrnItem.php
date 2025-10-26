@@ -248,7 +248,7 @@ class MrnItem extends Model
      */
     public function getVariancePercentageAttribute(): float
     {
-        if ($this->ordered_quantity == 0) {
+        if ($this->ordered_quantity === 0) {
             return 0;
         }
         return ($this->variance / $this->ordered_quantity) * 100;
