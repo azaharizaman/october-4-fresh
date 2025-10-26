@@ -321,7 +321,7 @@ class MriItem extends Model
      */
     public function convertFromDefaultUom(float $quantityInDefaultUom): float
     {
-        if ($this->conversion_factor_used == 0) {
+        if ($this->conversion_factor_used === 0) {
             return 0;
         }
         return $quantityInDefaultUom / $this->conversion_factor_used;
