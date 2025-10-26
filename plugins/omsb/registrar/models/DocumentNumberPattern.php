@@ -171,7 +171,7 @@ class DocumentNumberPattern extends Model
             }
             
             if ($pattern->suffix) {
-                $documentNumber = $pattern->suffix . $documentNumber;
+                $documentNumber = $documentNumber . $pattern->suffix;
             }
             
             // Atomically increment next_number
