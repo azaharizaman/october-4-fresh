@@ -65,7 +65,11 @@ class PhysicalCountItem extends Model
         static::saving(function ($model) {
             $model->variance = $model->counted_quantity - $model->system_quantity;
             
-            if (!$model->conversion_factor_used && $model->counted_quantity_in_uom > 0) {
+            if (
+                !$model->conversion_factor_used
+                && is_numeric($model->counted_quantity_in_uom)
+                && $model->counted_quantity_in_uom > 0
+            ) {
                 $model->conversion_factor_used = $model->counted_quantity_in_default_uom / $model->counted_quantity_in_uom;
             }
         });
