@@ -187,7 +187,7 @@ class PurchaseRequest extends Model
         });
 
         // Recalculate total when items change
-        static::saved(function ($model) {
+        static::saving(function ($model) {
             $model->recalculateTotal();
         });
     }
