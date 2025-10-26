@@ -302,7 +302,7 @@ class MriItem extends Model
      */
     public function getFulfillmentPercentageAttribute(): float
     {
-        if ($this->approved_quantity == 0) {
+        if ($this->approved_quantity === 0) {
             return 0;
         }
         return ($this->issued_quantity / $this->approved_quantity) * 100;
