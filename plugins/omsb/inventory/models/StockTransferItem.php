@@ -106,8 +106,12 @@ class StockTransferItem extends Model
         static::saving(function ($model) {
             $model->total_cost = $model->quantity_shipped * $model->unit_cost;
             
-            if (!$model->conversion_factor_used && $model->requested_quantity_in_uom > 0) {
-                $model->conversion_factor_used = $model->requested_quantity_in_default_uom / $model->requested_quantity_in_uom;
+            if (!$model->conversion_factor_used) {
+                if ($model->requested_quantity_in_uom > 0) {
+                    $model->conversion_factor_used = $model->requested_quantity_in_default_uom / $model->requested_quantity_in_uom;
+                } else {
+                    throw new ValidationException(['requested_quantity_in_uom' => 'Requested quantity in UOM must be greater than zero to calculate conversion factor.']);
+                }
             }
             
             if ($model->quantity_shipped > $model->quantity_requested) {
