@@ -113,15 +113,21 @@ class PurchaseRequestItem extends Model
             }
             
             // Auto-populate from purchaseable_item if selected
-            if ($model->purchaseable_item_id && $model->purchaseable_item) {
-                if (!$model->item_description) {
-                    $model->item_description = $model->purchaseable_item->name;
+            if ($model->purchaseable_item_id) {
+                // Ensure relationship is loaded to avoid extra query per property access
+                if (!$model->relationLoaded('purchaseable_item')) {
+                    $model->load('purchaseable_item');
                 }
-                if (!$model->unit_of_measure) {
-                    $model->unit_of_measure = $model->purchaseable_item->unit_of_measure;
-                }
-                if (!$model->estimated_unit_cost && $model->purchaseable_item->standard_cost) {
-                    $model->estimated_unit_cost = $model->purchaseable_item->standard_cost;
+                if ($model->purchaseable_item) {
+                    if (!$model->item_description) {
+                        $model->item_description = $model->purchaseable_item->name;
+                    }
+                    if (!$model->unit_of_measure) {
+                        $model->unit_of_measure = $model->purchaseable_item->unit_of_measure;
+                    }
+                    if (!$model->estimated_unit_cost && $model->purchaseable_item->standard_cost) {
+                        $model->estimated_unit_cost = $model->purchaseable_item->standard_cost;
+                    }
                 }
             }
         });
