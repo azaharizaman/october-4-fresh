@@ -186,7 +186,7 @@ function formatActionType($actionType) {
                                     
                                     <?php if (isset($data['total_amount'])): ?>
                                         <span class="feed-amount">
-                                            Amount: <?= isset($data['currency']) ? e($data['currency']) : 'RM' ?><?= number_format($data['total_amount'], 2) ?>
+                                            Amount: <?= isset($data['currency']) ? e($data['currency']) : 'RM' ?> <?= number_format($data['total_amount'], 2) ?>
                                         </span>
                                     <?php endif; ?>
                                 </div>
