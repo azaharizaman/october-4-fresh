@@ -34,7 +34,7 @@ The fix implements **database-level pessimistic locking** using Laravel's `lockF
 All operations are wrapped in a database transaction to ensure atomicity:
 
 ```php
-return \Db::transaction(function () use ($variables) {
+return \DB::transaction(function () use ($variables) {
     // All operations here are atomic
 });
 ```
@@ -102,7 +102,7 @@ T15     |                                | Commit & release lock
 ```php
 public function generateNumber(array $variables = []): string
 {
-    return \Db::transaction(function () use ($variables) {
+    return \DB::transaction(function () use ($variables) {
         // Acquire pessimistic lock on this row to prevent race conditions
         $pattern = self::where('id', $this->id)->lockForUpdate()->first();
         
