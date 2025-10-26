@@ -51,7 +51,8 @@ function getUserInitials($user) {
     $firstInitial = $user->first_name ? mb_substr($user->first_name, 0, 1) : '';
     $lastInitial = $user->last_name ? mb_substr($user->last_name, 0, 1) : '';
     
-    return strtoupper($firstInitial . $lastInitial);
+    $initials = strtoupper($firstInitial . $lastInitial);
+    return $initials !== '' ? $initials : 'U'; // Fallback to 'U' if both initials are empty
 }
 
 /**
