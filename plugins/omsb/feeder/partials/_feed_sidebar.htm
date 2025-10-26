@@ -32,13 +32,8 @@ if (!isset($feedableType) || !isset($feedableId)) {
     return;
 }
 
-// Fetch feeds for the current document
-$feeds = Feed::where('feedable_type', $feedableType)
-    ->where('feedable_id', $feedableId)
-    ->with('user')
-    ->orderBy('created_at', 'desc')
-    ->limit($limit)
-    ->get();
+// Fetch feeds for the current document using the static method to avoid duplication
+$feeds = Feed::getForDocument($feedableType, $feedableId, $limit);
 
 /**
  * Get user initials from a backend user
