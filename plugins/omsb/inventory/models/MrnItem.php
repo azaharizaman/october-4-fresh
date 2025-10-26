@@ -283,7 +283,7 @@ class MrnItem extends Model
      */
     public function getRejectionPercentageAttribute(): float
     {
-        if ($this->delivered_quantity == 0) {
+        if ($this->delivered_quantity === 0) {
             return 0;
         }
         return ($this->rejected_quantity / $this->delivered_quantity) * 100;
