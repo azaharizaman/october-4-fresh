@@ -137,7 +137,7 @@ class DocumentNumberPattern extends Model
      */
     public function generateNumber(array $variables = []): string
     {
-        return \Db::transaction(function () use ($variables) {
+        return \DB::transaction(function () use ($variables) {
             // Acquire pessimistic lock on this row to prevent race conditions
             $pattern = self::where('id', $this->id)->lockForUpdate()->first();
             
