@@ -234,7 +234,7 @@ class StockAdjustmentItem extends Model
      */
     public function getVariancePercentageAttribute(): float
     {
-        if ($this->quantity_before == 0) {
+        if ($this->quantity_before === 0) {
             return $this->quantity_after > 0 ? 100 : 0;
         }
         return ($this->quantity_variance / $this->quantity_before) * 100;
