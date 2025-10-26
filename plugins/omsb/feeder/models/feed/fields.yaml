@@ -1,0 +1,69 @@
+# ===================================
+#  Form Field Definitions
+# ===================================
+
+fields:
+    id:
+        label: ID
+        disabled: true
+    
+    user:
+        label: User
+        type: relation
+        nameFrom: full_name
+        descriptionFrom: email
+        span: left
+        disabled: true
+    
+    action_type:
+        label: Action Type
+        type: text
+        span: right
+        disabled: true
+    
+    feedable_type:
+        label: Related Model Type
+        type: text
+        span: left
+        disabled: true
+    
+    feedable_id:
+        label: Related Model ID
+        type: number
+        span: right
+        disabled: true
+    
+    title:
+        label: Title
+        type: text
+        span: full
+        disabled: true
+    
+    body:
+        label: Body
+        type: textarea
+        size: large
+        span: full
+        disabled: true
+    
+    additional_data:
+        label: Additional Data
+        type: codeeditor
+        language: json
+        span: full
+        disabled: true
+        size: large
+    
+    created_at:
+        label: Created At
+        type: datepicker
+        mode: datetime
+        span: left
+        disabled: true
+    
+    updated_at:
+        label: Updated At
+        type: datepicker
+        mode: datetime
+        span: right
+        disabled: true

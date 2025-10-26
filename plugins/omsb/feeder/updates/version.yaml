@@ -1,1 +1,4 @@
 v1.0.1: First version of Feeder
+v1.0.2:
+  - 'Create feeds table for activity tracking'
+  - create_feeds_table.php

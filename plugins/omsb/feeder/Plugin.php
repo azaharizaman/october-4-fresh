@@ -17,9 +17,9 @@ class Plugin extends PluginBase
     {
         return [
             'name' => 'Feeder',
-            'description' => 'No description provided yet...',
+            'description' => 'Activity tracking plugin that logs all user actions across the system',
             'author' => 'Omsb',
-            'icon' => 'icon-leaf'
+            'icon' => 'icon-rss'
         ];
     }
 
@@ -56,12 +56,10 @@ class Plugin extends PluginBase
      */
     public function registerPermissions()
     {
-        return []; // Remove this line to activate
-
         return [
-            'omsb.feeder.some_permission' => [
+            'omsb.feeder.access_feeds' => [
                 'tab' => 'Feeder',
-                'label' => 'Some permission'
+                'label' => 'Access Activity Feed'
             ],
         ];
     }
@@ -71,16 +69,6 @@ class Plugin extends PluginBase
      */
     public function registerNavigation()
     {
-        return []; // Remove this line to activate
-
-        return [
-            'feeder' => [
-                'label' => 'Feeder',
-                'url' => Backend::url('omsb/feeder/mycontroller'),
-                'icon' => 'icon-leaf',
-                'permissions' => ['omsb.feeder.*'],
-                'order' => 500,
-            ],
-        ];
+        return [];
     }
 }
