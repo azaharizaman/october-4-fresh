@@ -1,1 +1,5 @@
-v1.0.1: First version of Registrar
+v1.0.1:
+    - First version of Registrar
+    - create_document_types_table.php
+    - create_document_number_patterns_table.php
+    - create_issued_document_numbers_table.php
