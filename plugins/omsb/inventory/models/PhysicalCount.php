@@ -85,7 +85,7 @@ class PhysicalCount extends Model
         static::saving(function ($model) {
             if ($model->items) {
                 $model->total_items_counted = $model->items->count();
-                $model->variance_count = $model->items->where('has_variance', true)->count();
+                $model->variance_count = $model->items->filter(fn($item) => $item->hasVariance())->count();
             }
         });
     }
