@@ -1,0 +1,259 @@
+# Procurement Plugin Specification
+
+plugin:
+  name: Procurement
+  namespace: Omsb\Procurement
+  version: 1.0.0
+  author: Omsb
+  description: Core procurement operations managing the complete purchase lifecycle from requisition to payment, with master catalog of all purchaseable items
+  icon: icon-shopping-cart
+
+features:
+  - Master catalog of all purchaseable items (inventory and non-inventory)
+  - Purchase request management
+  - Vendor quotation tracking
+  - Purchase order processing
+  - Goods receipt notes for inventory items
+  - Delivery orders for non-inventory items
+  - Procurement reporting and analytics
+  - Item category management
+  - Vendor management
+
+models:
+  PurchaseableItem:
+    description: Master catalog of all items that can be purchased
+    table: omsb_procurement_purchaseable_items
+    key_fields:
+      - code (unique identifier)
+      - name
+      - description
+      - is_inventory_item (boolean - determines fulfillment routing)
+      - item_type (enum - asset classification)
+      - item_category_id (references ItemCategory)
+      - unit_of_measure
+      - gl_account_id (for non-inventory items)
+      - barcode
+    relationships:
+      - hasMany: WarehouseItem (Inventory plugin)
+      - belongsTo: ItemCategory
+      - belongsTo: GlAccount (Organization plugin)
+
+  ItemCategory:
+    description: Categories for organizing purchaseable items
+    table: omsb_procurement_item_categories
+    key_fields:
+      - code
+      - name
+      - description
+      - parent_id (self-referencing hierarchy)
+    relationships:
+      - hasMany: PurchaseableItem
+      - belongsTo: parent (ItemCategory)
+      - hasMany: children (ItemCategory)
+
+  Vendor:
+    description: Supplier information for procurement
+    table: omsb_procurement_vendors
+    key_fields:
+      - code
+      - name
+      - contact_person
+      - contact_email
+      - contact_phone
+      - address
+      - payment_terms
+      - is_active
+    relationships:
+      - hasMany: PurchaseOrder
+      - hasMany: VendorQuotation
+
+  PurchaseRequest:
+    description: Internal request to purchase items
+    table: omsb_procurement_purchase_requests
+    key_fields:
+      - document_number
+      - requester_id (staff)
+      - site_id
+      - request_date
+      - required_date
+      - status
+      - total_amount
+    relationships:
+      - belongsTo: Requester (Staff)
+      - belongsTo: Site
+      - hasMany: PurchaseRequestLine
+      - morphMany: WorkflowHistory
+
+  PurchaseRequestLine:
+    description: Line items for purchase requests
+    table: omsb_procurement_purchase_request_lines
+    key_fields:
+      - purchase_request_id
+      - purchaseable_item_id
+      - quantity
+      - estimated_unit_price
+      - estimated_total
+      - notes
+    relationships:
+      - belongsTo: PurchaseRequest
+      - belongsTo: PurchaseableItem
+
+  VendorQuotation:
+    description: Quotations from vendors for purchase requests
+    table: omsb_procurement_vendor_quotations
+    key_fields:
+      - document_number
+      - vendor_id
+      - purchase_request_id
+      - quotation_date
+      - validity_date
+      - status
+      - total_amount
+    relationships:
+      - belongsTo: Vendor
+      - belongsTo: PurchaseRequest
+      - hasMany: VendorQuotationLine
+
+  PurchaseOrder:
+    description: Purchase orders to vendors
+    table: omsb_procurement_purchase_orders
+    key_fields:
+      - document_number
+      - vendor_id
+      - order_date
+      - delivery_date
+      - status
+      - total_amount
+      - payment_terms
+    relationships:
+      - belongsTo: Vendor
+      - hasMany: PurchaseOrderLine
+      - morphMany: WorkflowHistory
+
+  PurchaseOrderLine:
+    description: Line items for purchase orders
+    table: omsb_procurement_purchase_order_lines
+    key_fields:
+      - purchase_order_id
+      - purchaseable_item_id
+      - site_id (target delivery site)
+      - quantity
+      - unit_price
+      - total_amount
+    relationships:
+      - belongsTo: PurchaseOrder
+      - belongsTo: PurchaseableItem
+      - belongsTo: Site
+
+  GoodsReceiptNote:
+    description: Document for receiving inventory items at warehouse
+    table: omsb_procurement_goods_receipt_notes
+    key_fields:
+      - document_number
+      - purchase_order_id
+      - warehouse_id
+      - receipt_date
+      - status
+      - received_by
+    relationships:
+      - belongsTo: PurchaseOrder
+      - belongsTo: Warehouse (Inventory plugin)
+      - hasMany: GoodsReceiptLine
+
+  DeliveryOrder:
+    description: Document for non-inventory item fulfillment
+    table: omsb_procurement_delivery_orders
+    key_fields:
+      - document_number
+      - purchase_order_id
+      - site_id
+      - delivery_date
+      - status
+      - received_by
+    relationships:
+      - belongsTo: PurchaseOrder
+      - belongsTo: Site
+      - hasMany: DeliveryOrderLine
+
+controllers:
+  - PurchaseableItems (CRUD for master item catalog)
+  - ItemCategories (CRUD for item categories)
+  - Vendors (CRUD for vendor management)
+  - PurchaseRequests (CRUD for purchase requests)
+  - VendorQuotations (CRUD for vendor quotations)
+  - PurchaseOrders (CRUD for purchase orders)
+  - GoodsReceiptNotes (CRUD for goods receipts)
+  - DeliveryOrders (CRUD for delivery orders)
+  - Reports (Procurement analytics and reports)
+
+permissions:
+  - omsb.procurement.access_all (Full access)
+  - omsb.procurement.manage_items (Manage purchaseable items)
+  - omsb.procurement.manage_categories (Manage item categories)
+  - omsb.procurement.manage_vendors (Manage vendors)
+  - omsb.procurement.purchase_requests (Manage purchase requests)
+  - omsb.procurement.purchase_orders (Manage purchase orders)
+  - omsb.procurement.vendor_quotations (Manage vendor quotations)
+  - omsb.procurement.goods_receipt (Manage goods receipt notes)
+  - omsb.procurement.delivery_orders (Manage delivery orders)
+  - omsb.procurement.view_reports (View procurement reports)
+
+integration_points:
+  Organization:
+    - References Site model for delivery locations
+    - References Staff model for hierarchy and approvals
+    - References GlAccount for non-inventory item GL mapping
+  
+  Inventory:
+    - PurchaseableItem referenced by WarehouseItem
+    - GoodsReceiptNote creates InventoryLedger entries
+    - Routes inventory items to receiving warehouses
+  
+  Workflow:
+    - Purchase requests follow workflow approval process
+    - Purchase orders require multi-level approval
+    - Status transitions tracked in WorkflowHistory
+  
+  Registrar:
+    - Document numbering for PR, PO, VQ, GRN, DO
+    - Pattern: SITECODE-DOCUMENTCODE-YYYY-#####
+  
+  Feeder:
+    - Activity tracking for all procurement operations
+    - Logs create, update, approve, reject actions
+
+business_rules:
+  - Purchaseable items are the single source of truth for all purchasable items
+  - is_inventory_item flag determines fulfillment routing (GRN vs DO)
+  - is_inventory_item cannot be changed if item has positive QoH in any warehouse
+  - Each PO line specifies target site for delivery
+  - Inventory items can only be received at sites with active warehouses
+  - Non-inventory items bypass warehouse and record GL entries via gl_account_id
+  - Purchase requests require approval before becoming purchase orders
+  - Purchase orders require approval before vendor fulfillment
+
+workflows:
+  purchase_request:
+    statuses: [Draft, Submitted, Reviewed, Approved, Rejected, Cancelled]
+    transitions:
+      - Draft → Submitted (by creator)
+      - Submitted → Reviewed (by manager)
+      - Reviewed → Approved (by department head)
+      - Any → Rejected (by approver with reason)
+      - Any → Cancelled (by creator if Draft)
+  
+  purchase_order:
+    statuses: [Draft, Submitted, Approved, Rejected, Fulfilled, Cancelled]
+    transitions:
+      - Draft → Submitted (by creator)
+      - Submitted → Approved (by approver)
+      - Approved → Fulfilled (when GRN/DO completed)
+      - Any → Rejected (by approver with reason)
+      - Any → Cancelled (by authorized staff)
+
+reports:
+  - Purchase Request Report (by date, status, requester)
+  - Purchase Order Report (by date, status, vendor)
+  - Vendor Performance Report (delivery time, quality, pricing)
+  - Procurement Budget Report (spending by category, site, period)
+  - Item Purchase History (by item, vendor, date range)

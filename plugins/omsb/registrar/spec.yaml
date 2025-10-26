@@ -1,0 +1,247 @@
+# Registrar Plugin Specification
+
+plugin:
+  name: Registrar
+  namespace: Omsb\Registrar
+  version: 1.0.0
+  author: Omsb
+  description: Document numbering patterns and registration management system with customizable auto-incrementing sequences
+  icon: icon-list-ol
+
+features:
+  - Customizable document numbering patterns
+  - Auto-incrementing sequences with yearly or continuous reset
+  - Document registry tracking all issued document numbers
+  - Prevents duplicate document numbers
+  - Supports multiple document types across all plugins
+  - Pattern templates with placeholders (site code, document code, year, sequence)
+  - Audit trail of all issued document numbers
+
+models:
+  DocumentPattern:
+    description: Defines numbering patterns for document types
+    table: omsb_registrar_document_patterns
+    key_fields:
+      - document_type (unique - e.g., 'purchase_request', 'purchase_order')
+      - pattern_template (e.g., '{SITECODE}-{DOCUMENTCODE}-{YYYY}-{#####}')
+      - document_code (e.g., 'PR', 'PO', 'MRN')
+      - prefix (optional)
+      - suffix (optional)
+      - sequence_length (number of digits for sequence, default 5)
+      - reset_interval (yearly, continuous, monthly)
+      - is_active
+      - description
+    relationships:
+      - hasMany: DocumentSequence
+      - hasMany: DocumentRegistry
+    pattern_placeholders:
+      - '{SITECODE}': Site code from Organization
+      - '{DOCUMENTCODE}': Document type code
+      - '{YYYY}': Full year (4 digits)
+      - '{YY}': Short year (2 digits)
+      - '{MM}': Month (2 digits)
+      - '{#####}': Auto-incrementing sequence with specified length
+
+  DocumentSequence:
+    description: Tracks current sequence numbers for each pattern and period
+    table: omsb_registrar_document_sequences
+    key_fields:
+      - document_pattern_id
+      - site_id (for site-specific sequences)
+      - period (year or year-month depending on reset_interval)
+      - current_sequence (last issued number)
+      - last_reset_date
+    relationships:
+      - belongsTo: DocumentPattern
+      - belongsTo: Site
+    unique_constraint:
+      - document_pattern_id
+      - site_id
+      - period
+
+  DocumentRegistry:
+    description: Registry of all issued document numbers for audit trail
+    table: omsb_registrar_document_registry
+    key_fields:
+      - document_pattern_id
+      - document_number (full formatted number)
+      - document_type
+      - documentable_type (morphTo)
+      - documentable_id (morphTo)
+      - site_id
+      - issued_date
+      - issued_by (staff_id)
+      - status (active, cancelled, deleted)
+    relationships:
+      - belongsTo: DocumentPattern
+      - belongsTo: Site
+      - belongsTo: IssuedBy (Staff)
+      - morphTo: documentable (the actual document record)
+    indexes:
+      - document_number (unique index)
+      - documentable_type and documentable_id
+      - site_id
+      - status
+
+controllers:
+  - DocumentPatterns (CRUD for managing numbering patterns)
+  - DocumentSequences (View and manage sequence counters)
+  - DocumentRegistry (View registry of issued document numbers)
+
+permissions:
+  - omsb.registrar.access_all (Full access to document registration)
+  - omsb.registrar.manage_patterns (Create/edit/delete document patterns)
+  - omsb.registrar.manage_sequences (Reset or adjust sequence counters)
+  - omsb.registrar.view_registry (View document registry and audit trail)
+
+services:
+  DocumentNumberService:
+    description: Service class for generating document numbers
+    methods:
+      - generateDocumentNumber(documentType, siteId)
+      - reserveDocumentNumber(documentType, siteId)
+      - registerDocument(documentNumber, documentType, documentable)
+      - cancelDocumentNumber(documentNumber)
+      - validateDocumentNumber(documentNumber, documentType)
+      - getNextSequence(documentPatternId, siteId, period)
+
+integration_points:
+  Organization:
+    - References Site model for site-specific document numbering
+    - Uses site code in document number pattern
+    - References Staff model for tracking who issued documents
+  
+  Procurement:
+    - Generates numbers for Purchase Request, Purchase Order, Vendor Quotation, Goods Receipt Note, Delivery Order
+    - Document types are purchase_request, purchase_order, vendor_quotation, goods_receipt_note, delivery_order
+  
+  Inventory:
+    - Generates numbers for Material Receipt Note, Material Request Issuance, Stock Adjustment, Stock Transfer, Physical Count
+    - Document types are mrn, mri, stock_adjustment, stock_transfer, physical_count
+  
+  Workflow:
+    - Works with workflow plugin for status transition tracking
+    - Document status affects registry status field
+
+business_rules:
+  - Each document type must have exactly one active pattern at a time
+  - Document numbers are generated sequentially and cannot be reused
+  - Deleted or cancelled documents retain their numbers in registry for audit trail
+  - Sequence resets automatically based on reset_interval setting:
+    - yearly: Resets on January 1st
+    - continuous: Never resets automatically
+    - monthly: Resets on the 1st of each month
+  - Site-specific sequences ensure uniqueness across multi-site operations
+  - Document numbers are generated at document creation (Draft status)
+  - Reserved numbers are committed when document is saved
+  - Failed saves do not commit reserved numbers
+
+default_patterns:
+  purchase_request:
+    pattern: '{SITECODE}-PR-{YYYY}-{#####}'
+    document_code: 'PR'
+    reset_interval: 'yearly'
+    sequence_length: 5
+    example: 'HQ-PR-2024-00001'
+
+  purchase_order:
+    pattern: '{SITECODE}-PO-{YYYY}-{#####}'
+    document_code: 'PO'
+    reset_interval: 'yearly'
+    sequence_length: 5
+    example: 'HQ-PO-2024-00123'
+
+  goods_receipt_note:
+    pattern: '{SITECODE}-GRN-{YYYY}-{#####}'
+    document_code: 'GRN'
+    reset_interval: 'yearly'
+    sequence_length: 5
+    example: 'HQ-GRN-2024-00045'
+
+  delivery_order:
+    pattern: '{SITECODE}-DO-{YYYY}-{#####}'
+    document_code: 'DO'
+    reset_interval: 'yearly'
+    sequence_length: 5
+    example: 'HQ-DO-2024-00067'
+
+  material_receipt_note:
+    pattern: '{SITECODE}-MRN-{YYYY}-{#####}'
+    document_code: 'MRN'
+    reset_interval: 'yearly'
+    sequence_length: 5
+    example: 'HQ-MRN-2024-00089'
+
+  material_request_issuance:
+    pattern: '{SITECODE}-MRI-{YYYY}-{#####}'
+    document_code: 'MRI'
+    reset_interval: 'yearly'
+    sequence_length: 5
+    example: 'HQ-MRI-2024-00012'
+
+  stock_adjustment:
+    pattern: '{SITECODE}-SA-{YYYY}-{#####}'
+    document_code: 'SA'
+    reset_interval: 'yearly'
+    sequence_length: 5
+    example: 'HQ-SA-2024-00034'
+
+  stock_transfer:
+    pattern: '{SITECODE}-ST-{YYYY}-{#####}'
+    document_code: 'ST'
+    reset_interval: 'yearly'
+    sequence_length: 5
+    example: 'HQ-ST-2024-00056'
+
+  physical_count:
+    pattern: '{SITECODE}-PC-{YYYY}-{#####}'
+    document_code: 'PC'
+    reset_interval: 'yearly'
+    sequence_length: 5
+    example: 'HQ-PC-2024-00078'
+
+usage_example: |
+  // In a controller or service
+  use Omsb\Registrar\Services\DocumentNumberService;
+  
+  $documentNumberService = new DocumentNumberService();
+  
+  // Generate and reserve a document number
+  $documentNumber = $documentNumberService->generateDocumentNumber(
+      'purchase_request',
+      $siteId
+  );
+  
+  // After document is saved successfully
+  $documentNumberService->registerDocument(
+      $documentNumber,
+      'purchase_request',
+      $purchaseRequest
+  );
+  
+  // If document creation fails, number is automatically released
+  // If document is cancelled later
+  $documentNumberService->cancelDocumentNumber($documentNumber);
+
+migration_strategy:
+  - Create document_patterns table with default patterns
+  - Create document_sequences table
+  - Create document_registry table
+  - Seed default patterns for all document types
+  - Initialize sequences for existing sites
+  - Migrate existing document numbers to registry (if applicable)
+
+reporting:
+  - Document number usage report by type and site
+  - Sequence gap analysis (detect missing numbers)
+  - Document registry audit report
+  - Pattern configuration report
+  - Sequence reset history
+
+validation_rules:
+  - Pattern template must contain at least one placeholder
+  - Pattern template must include {#####} sequence placeholder
+  - Document code must be unique across all patterns
+  - Sequence length must be between 3 and 10
+  - Reset interval must be: yearly, continuous, or monthly
+  - Only one active pattern per document type

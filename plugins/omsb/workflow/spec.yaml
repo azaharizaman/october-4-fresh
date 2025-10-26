@@ -1,0 +1,329 @@
+# Workflow Plugin Specification
+
+plugin:
+  name: Workflow
+  namespace: Omsb\Workflow
+  version: 1.0.0
+  author: Omsb
+  description: Workflow management system tracking workflow definitions, status transitions, and approval hierarchies for document-driven processes
+  icon: icon-random
+
+features:
+  - Flexible workflow definitions for any document type
+  - Configurable status transitions with approval rules
+  - Multi-level approval hierarchies based on organizational structure
+  - Amount-based approval ceilings per staff level
+  - Rejection handling with mandatory reason comments
+  - Approval history tracking with timestamps
+  - Overdue approval detection and auto-revert to Draft
+  - Role-based approver assignment
+  - Transition rules enforcement
+
+models:
+  WorkflowDefinition:
+    description: Defines workflow for specific document types
+    table: omsb_workflow_workflow_definitions
+    key_fields:
+      - workflow_code (unique - e.g., 'purchase_request', 'purchase_order')
+      - name
+      - description
+      - document_type (matches Registrar document types)
+      - is_active
+      - max_approval_days (overdue threshold)
+    relationships:
+      - hasMany: DocumentStatus
+      - hasMany: StatusTransition
+      - hasMany: WorkflowHistory
+    examples:
+      - workflow_code: 'purchase_request'
+      - workflow_code: 'purchase_order'
+      - workflow_code: 'stock_adjustment'
+      - workflow_code: 'material_request_issuance'
+
+  DocumentStatus:
+    description: Available statuses for documents in a workflow
+    table: omsb_workflow_document_statuses
+    key_fields:
+      - workflow_definition_id
+      - status_code (e.g., 'draft', 'submitted', 'approved')
+      - name (display name)
+      - description
+      - color_code (for UI display)
+      - is_initial (starting status)
+      - is_final (ending status)
+      - is_editable (can document be edited in this status)
+      - is_deletable (can document be deleted in this status)
+      - sort_order
+    relationships:
+      - belongsTo: WorkflowDefinition
+      - hasMany: from_transitions (StatusTransition)
+      - hasMany: to_transitions (StatusTransition)
+    common_statuses:
+      - Draft (initial, editable, deletable)
+      - Submitted (in progress)
+      - Reviewed (in progress)
+      - Approved (final for some workflows)
+      - Rejected (final or can revert to Draft)
+      - Cancelled (final)
+      - Completed (final)
+
+  StatusTransition:
+    description: Defines allowed transitions between statuses
+    table: omsb_workflow_status_transitions
+    key_fields:
+      - workflow_definition_id
+      - from_status_id
+      - to_status_id
+      - transition_name (e.g., 'Submit for Approval', 'Approve')
+      - in_transition_status (temporary status during processing)
+      - requires_approval (boolean)
+      - requires_comment (boolean - mandatory for rejection)
+      - approval_role_id (which role can perform this transition)
+      - min_approval_amount (optional)
+      - max_approval_amount (optional)
+      - sort_order
+    relationships:
+      - belongsTo: WorkflowDefinition
+      - belongsTo: FromStatus (DocumentStatus)
+      - belongsTo: ToStatus (DocumentStatus)
+      - belongsTo: ApprovalRole
+    transition_examples:
+      - Draft → Submitted (by creator, no approval needed)
+      - Submitted → Reviewed (by manager, requires approval)
+      - Reviewed → Approved (by department head, requires approval)
+      - Any → Rejected (by approver, requires comment)
+
+  ApproverRole:
+    description: Roles that can approve specific transitions
+    table: omsb_workflow_approver_roles
+    key_fields:
+      - role_code (unique - e.g., 'manager', 'dept_head', 'finance_manager')
+      - name
+      - description
+      - approval_level (hierarchy level)
+      - default_ceiling_amount (default approval limit)
+    relationships:
+      - hasMany: StatusTransition
+      - hasMany: StaffApproverRole (through Staff)
+    examples:
+      - role_code: manager
+        approval_level: 1
+        ceiling: 10000
+      - role_code: dept_head
+        approval_level: 2
+        ceiling: 50000
+      - role_code: finance_manager
+        approval_level: 3
+        ceiling: 100000
+      - role_code: director
+        approval_level: 4
+        ceiling: unlimited
+
+  StaffApproverRole:
+    description: Assignment of approver roles to staff with custom ceilings
+    table: omsb_workflow_staff_approver_roles
+    key_fields:
+      - staff_id
+      - approver_role_id
+      - workflow_definition_id (can limit role to specific workflows)
+      - site_id (can limit role to specific sites)
+      - custom_ceiling_amount (overrides role default)
+      - is_active
+      - valid_from
+      - valid_until
+    relationships:
+      - belongsTo: Staff (Organization plugin)
+      - belongsTo: ApproverRole
+      - belongsTo: WorkflowDefinition
+      - belongsTo: Site
+    unique_constraint:
+      - staff_id
+      - approver_role_id
+      - workflow_definition_id
+      - site_id
+
+  WorkflowHistory:
+    description: Complete audit trail of workflow transitions
+    table: omsb_workflow_workflow_history
+    key_fields:
+      - workflow_definition_id
+      - documentable_type (morphTo)
+      - documentable_id (morphTo)
+      - from_status_id
+      - to_status_id
+      - transition_id
+      - action_type (submit, approve, reject, cancel)
+      - action_by (staff_id)
+      - action_date
+      - comments (optional, mandatory for rejection)
+      - ip_address
+      - user_agent
+    relationships:
+      - belongsTo: WorkflowDefinition
+      - morphTo: documentable (the actual document)
+      - belongsTo: FromStatus (DocumentStatus)
+      - belongsTo: ToStatus (DocumentStatus)
+      - belongsTo: StatusTransition
+      - belongsTo: ActionBy (Staff)
+    indexes:
+      - documentable_type and documentable_id
+      - action_by
+      - action_date
+
+controllers:
+  - WorkflowDefinitions (CRUD for workflow definitions)
+  - DocumentStatuses (CRUD for document statuses)
+  - StatusTransitions (CRUD for transition rules)
+  - ApproverRoles (CRUD for approver roles)
+  - WorkflowHistory (View workflow history and audit trail)
+
+permissions:
+  - omsb.workflow.access_all (Full access to workflow management)
+  - omsb.workflow.manage_definitions (Create/edit workflow definitions)
+  - omsb.workflow.manage_statuses (Create/edit document statuses)
+  - omsb.workflow.manage_transitions (Create/edit status transitions)
+  - omsb.workflow.manage_roles (Create/edit approver roles)
+  - omsb.workflow.view_history (View workflow history and audit trail)
+
+services:
+  WorkflowService:
+    description: Service class for workflow operations
+    methods:
+      - initiateWorkflow(document, workflowCode)
+      - transitionStatus(document, transitionId, comment)
+      - canTransition(document, transitionId, staff)
+      - getAvailableTransitions(document, staff)
+      - getCurrentStatus(document)
+      - getWorkflowHistory(document)
+      - checkApprovalCeiling(staff, amount, workflowCode)
+      - getApprovers(document, transitionId)
+      - isOverdue(document)
+      - autoRevertOverdue()
+
+  ApprovalService:
+    description: Service class for approval operations
+    methods:
+      - approve(document, staff, comment)
+      - reject(document, staff, reason)
+      - canApprove(document, staff)
+      - getApprovalHierarchy(document)
+      - validateApprovalAmount(staff, amount, documentType)
+      - getApproversByLevel(level, siteId)
+
+integration_points:
+  Organization:
+    - References Staff model for approver hierarchy
+    - Uses organizational hierarchy for approval flow
+    - References Site model for site-specific approvals
+    - Approval ceilings can be site-specific
+  
+  Procurement:
+    - Workflow for Purchase Request (Draft → Submitted → Reviewed → Approved)
+    - Workflow for Purchase Order (Draft → Submitted → Approved → Fulfilled)
+    - Workflow for Vendor Quotation (Draft → Submitted → Reviewed → Accepted/Rejected)
+  
+  Inventory:
+    - Workflow for Material Request Issuance (Draft → Submitted → Approved → Fulfilled)
+    - Workflow for Stock Adjustment (Draft → Submitted → Approved → Applied)
+    - Workflow for Stock Transfer (Draft → Submitted → Approved → In Transit → Received)
+    - Workflow for Physical Count (Draft → Submitted → Approved → Applied)
+  
+  Registrar:
+    - Document status affects registry status field
+    - Status transitions recorded in workflow history
+    - Document numbers assigned at workflow initiation
+  
+  Feeder:
+    - Activity tracking for all workflow actions
+    - Logs approvals, rejections, status changes
+
+business_rules:
+  - Documents start in initial status (typically Draft) when created
+  - Only Draft status documents can be edited or deleted
+  - Transitions must follow defined paths in StatusTransition table
+  - Approver must be in organizational hierarchy above creator
+  - Approver must have assigned role for the transition
+  - Approver's ceiling must be >= document amount
+  - Rejection requires mandatory reason comment
+  - Approval actions do not require comments (optional)
+  - Document in single active workflow at any time
+  - Overdue documents auto-revert to Draft after max_approval_days
+  - Rejected documents can revert to Draft (configurable per transition)
+  - Cancelled documents cannot transition to any other status
+  - Completed documents are locked and cannot be modified
+
+approval_flow_example:
+  purchase_request:
+    workflow_code: 'purchase_request'
+    statuses:
+      - Draft (initial, editable, deletable)
+      - Submitted
+      - Reviewed
+      - Approved (final)
+      - Rejected (final or revert to Draft)
+      - Cancelled (final)
+    transitions:
+      - Draft → Submitted (by creator, no approval)
+      - Submitted → Reviewed (by manager, amount <= 10,000)
+      - Reviewed → Approved (by dept_head, amount <= 50,000)
+      - Reviewed → Approved (by finance_manager, amount > 50,000)
+      - Any → Rejected (by approver, requires reason)
+      - Draft → Cancelled (by creator)
+    example_flow:
+      - Staff creates PR (Draft)
+      - Staff submits PR (Submitted)
+      - Manager reviews PR (Reviewed) if amount <= 10,000
+      - Dept Head approves PR (Approved) if amount <= 50,000
+      - Finance Manager approves PR (Approved) if amount > 50,000
+      - Any approver can reject with reason
+
+overdue_handling:
+  detection:
+    - Cron job runs daily
+    - Checks all documents in non-final statuses
+    - Compares current date with (last_action_date + max_approval_days)
+  action:
+    - Auto-revert to Draft status
+    - Log revert action in workflow history
+    - Notify creator and last approver
+    - Document becomes editable again
+
+rejection_handling:
+  configuration:
+    - Per transition, set rejection_target_status
+    - Can revert to Draft or previous status
+    - Rejection reason mandatory
+  process:
+    - Approver selects Reject action
+    - System prompts for reason (mandatory)
+    - Document transitions to rejection_target_status
+    - Workflow history records rejection with reason
+    - Creator notified of rejection
+
+validation_rules:
+  - Workflow code must be unique
+  - Status code must be unique within workflow
+  - Only one initial status per workflow
+  - At least one final status per workflow
+  - Transition must have valid from/to statuses
+  - Amount-based transitions must have min/max amounts
+  - Rejection transitions must require comments
+  - Approver role codes must be unique
+
+reporting:
+  - Documents by workflow status (count, value)
+  - Approval turnaround time by approver
+  - Overdue documents report
+  - Rejection rate by document type
+  - Approval bottleneck analysis
+  - Workflow efficiency metrics
+  - Approver workload report
+
+testing_considerations:
+  - Test all transition paths
+  - Test approval hierarchy validation
+  - Test amount-based approval routing
+  - Test overdue detection and auto-revert
+  - Test rejection with/without comments
+  - Test concurrent approval attempts
+  - Test workflow history accuracy
