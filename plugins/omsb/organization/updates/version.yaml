@@ -6,3 +6,6 @@ v1.0.2:
   - create_sites_table.php
   - create_staff_table.php
   - create_approvals_table.php
+v1.0.3:
+  - 'Add GL Accounts table'
+  - create_gl_accounts_table.php

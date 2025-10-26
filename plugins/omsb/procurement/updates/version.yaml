@@ -1,1 +1,15 @@
-v1.0.1: First version of Procurement
+v1.0.1:
+    - First version of Procurement
+    - create_vendors_table.php
+    - create_item_categories_table.php
+    - create_purchaseable_items_table.php
+    - create_purchase_requests_table.php
+    - create_purchase_request_items_table.php
+    - create_vendor_quotations_table.php
+    - create_vendor_quotation_items_table.php
+    - create_purchase_orders_table.php
+    - create_purchase_order_items_table.php
+    - create_goods_receipt_notes_table.php
+    - create_goods_receipt_note_items_table.php
+    - create_delivery_orders_table.php
+    - create_delivery_order_items_table.php
