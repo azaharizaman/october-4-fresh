@@ -4,6 +4,8 @@
 
 The Feeder plugin is a centralized activity tracking system that logs all user actions across the OctoberCMS application. It provides a unified audit trail for all OMSB plugins, eliminating the need for per-plugin activity logging implementations.
 
+**Important:** Feed records are system-generated and cannot be manually created, edited, or deleted. They are automatically created by the system when triggered by certain activities or explicitly called by other methods or events.
+
 ## Key Concepts
 
 ### Feed Model
@@ -15,17 +17,19 @@ The Feed model tracks user activities using polymorphic (morphTo) relationships,
 - `action_type`: Type of action performed (create, update, delete, approve, reject, etc.)
 - `feedable_type`: Fully qualified class name of the related model (polymorphic)
 - `feedable_id`: ID of the related model record (polymorphic)
+- `title`: Optional title for notes/comments
+- `body`: Optional body text for notes/comments
 - `additional_data`: JSON field storing action-specific details (amounts, statuses, etc.)
 - `created_at`: Timestamp when the action occurred
 - `updated_at`: Last modification timestamp
-- `deleted_at`: Soft delete timestamp for audit trail preservation
 
 **Features:**
 - Centralized activity logging (removes need for per-plugin logging)
 - Filterable by user, action type, target model, date range
 - Customizable feed display per model type
-- Comprehensive audit trail with soft deletes
+- Immutable records - cannot be edited or deleted once created
 - Polymorphic relationships for maximum flexibility
+- Support for notes/comments with title and body fields
 
 **Relationships:**
 - `belongsTo`: `user` (Backend\Models\User) - The staff member who performed the action
@@ -50,6 +54,14 @@ The Feed model tracks user activities using polymorphic (morphTo) relationships,
 - Query scope to filter feeds by user ID
 - Usage: `Feed::byUser(5)->get()`
 
+`beforeDelete()`
+- Prevents deletion of feed records
+- Always returns false
+
+`beforeUpdate()`
+- Prevents modification of feed records after creation
+- Throws exception if attempting to modify existing record
+
 **Validation Rules:**
 - `action_type`: Required, string, maximum 50 characters
 - `feedable_type`: Required, string, maximum 255 characters
@@ -57,43 +69,10 @@ The Feed model tracks user activities using polymorphic (morphTo) relationships,
 
 ## Backend Interface
 
-### Feeds Controller
-
-The Feeds controller provides a read-only interface for viewing activity logs through the OctoberCMS backend.
-
-**Features:**
-- List view with searching, sorting, and pagination
-- Preview view for detailed feed entry examination
-- Default sort by creation date (newest first)
-- 50 records per page for optimal performance
-- Bulk delete capability for administrators
-
-**Behaviors:**
-- `FormController`: Handles preview operations (read-only)
-- `ListController`: Manages the feed list view
+The Feeder plugin does not provide a dedicated backend navigation menu. Feed records are intended to be viewed through related models or custom dashboard widgets. The model configuration files (fields.yaml and columns.yaml) can be used by other plugins to display feed information in their interfaces.
 
 **Permissions:**
-- `omsb.feeder.access_feeds`: Required to view activity feed
-
-### List View Columns
-
-The list view displays the following information:
-- **ID**: Unique feed entry identifier
-- **User**: Name of the user who performed the action
-- **Action**: Type of action performed
-- **Model Type**: Class name of the related model
-- **Model ID**: ID of the related model record
-- **Description**: Formatted description of the activity
-- **Date**: Timestamp when the action occurred
-
-### Preview View
-
-The preview view displays all feed details in a read-only format:
-- User information with full name and email
-- Action type
-- Related model type and ID
-- Additional data (JSON formatted)
-- Creation and update timestamps
+- `omsb.feeder.access_feeds`: Permission for accessing feed data programmatically
 
 ## Database Structure
 
@@ -104,16 +83,16 @@ The preview view displays all feed details in a read-only format:
 - `action_type`: Type of action (VARCHAR(50), indexed)
 - `feedable_type`: Model class name (VARCHAR(255), indexed)
 - `feedable_id`: Model record ID (BIGINT UNSIGNED, indexed)
+- `title`: Optional title for notes/comments (VARCHAR(255), nullable)
+- `body`: Optional body text for notes/comments (TEXT, nullable)
 - `additional_data`: JSON field for extra information (nullable)
 - `created_at`, `updated_at`: Timestamps
-- `deleted_at`: Soft delete timestamp (indexed)
 
 **Indexes:**
 - `idx_feeds_feedable`: Composite index on (feedable_type, feedable_id) for polymorphic queries
 - `idx_feeds_action_type`: Index on action_type for filtering
 - `idx_feeds_user_id`: Index on user_id for user-specific queries
 - `idx_feeds_created_at`: Index on created_at for date-based queries
-- `idx_feeds_deleted_at`: Index on deleted_at for soft delete queries
 
 **Foreign Keys:**
 - `user_id` references `backend_users.id` with NULL ON DELETE
@@ -132,6 +111,23 @@ Feed::create([
     'action_type' => 'create',
     'feedable_type' => PurchaseRequest::class,
     'feedable_id' => $purchaseRequest->id,
+]);
+```
+
+### Recording an Activity with Title and Body (Notes/Comments)
+
+```php
+use Omsb\Feeder\Models\Feed;
+use BackendAuth;
+
+// When adding a comment or note to a document
+Feed::create([
+    'user_id' => BackendAuth::getUser()->id,
+    'action_type' => 'comment',
+    'feedable_type' => PurchaseRequest::class,
+    'feedable_id' => $purchaseRequest->id,
+    'title' => 'Budget Approval Required',
+    'body' => 'This purchase request requires additional budget approval from finance department before proceeding.',
 ]);
 ```
 
@@ -157,23 +153,50 @@ Feed::create([
 ]);
 ```
 
-### Recording a Deletion Activity
+### Recording a Model Deletion Activity
 
 ```php
 use Omsb\Feeder\Models\Feed;
 use BackendAuth;
 
-// When a Material Request is deleted
+// When a Material Request is deleted (record the action before deletion)
 Feed::create([
     'user_id' => BackendAuth::getUser()->id,
     'action_type' => 'delete',
     'feedable_type' => MaterialRequest::class,
     'feedable_id' => $materialRequest->id,
+    'title' => 'Material Request Cancelled',
+    'body' => 'Request was cancelled by user before approval.',
     'additional_data' => [
         'document_number' => $materialRequest->document_number,
         'reason' => 'Cancelled by user request'
     ],
 ]);
+```
+
+### Immutability Protection
+
+Feed records are immutable once created:
+
+```php
+// This will work - creating a new feed
+$feed = Feed::create([
+    'user_id' => BackendAuth::getUser()->id,
+    'action_type' => 'create',
+    'feedable_type' => PurchaseRequest::class,
+    'feedable_id' => $pr->id,
+]);
+
+// This will throw an exception - attempting to modify existing feed
+try {
+    $feed->action_type = 'update';
+    $feed->save();
+} catch (\Exception $e) {
+    // Exception: "Feed records cannot be modified once created."
+}
+
+// This will fail - attempting to delete feed
+$result = $feed->delete(); // Returns false, record not deleted
 ```
 
 ### Querying Recent Activities
@@ -234,13 +257,14 @@ echo $feed->description; // Formatted description
 Standard action types used across plugins:
 - `create`: New record created
 - `update`: Record modified
-- `delete`: Record deleted (soft delete)
+- `delete`: Record deleted or cancelled
 - `approve`: Record approved in workflow
 - `reject`: Record rejected in workflow
 - `submit`: Record submitted for approval
 - `review`: Record reviewed
 - `complete`: Record marked as complete
 - `cancel`: Record cancelled
+- `comment`: Note or comment added to a record
 
 ## Development Guidelines
 
@@ -251,6 +275,7 @@ Create feed entries for:
 2. **Workflow transitions**: submit, approve, reject, complete
 3. **Important business actions**: Stock transfer, Physical count, Payment processing
 4. **Administrative actions**: User role changes, Permission updates
+5. **Comments and notes**: User adds comments or notes to records
 
 ### When NOT to Create Feed Entries
 
@@ -259,6 +284,13 @@ Don't create feed entries for:
 2. **System operations**: Automated cron jobs, system maintenance
 3. **High-frequency actions**: API heartbeats, auto-save drafts
 4. **Sensitive operations**: Password changes, authentication attempts (use security audit log instead)
+
+### Immutability and Protection
+
+Feed records are immutable by design:
+1. **Cannot be edited**: Once created, feed records cannot be modified. The `beforeUpdate()` method throws an exception if modification is attempted.
+2. **Cannot be deleted**: The `beforeDelete()` method always returns false, preventing deletion.
+3. **Permanent audit trail**: All feed records remain in the database indefinitely for audit purposes.
 
 ### Best Practices
 
@@ -284,9 +316,15 @@ Don't create feed entries for:
 
 4. **Use descriptive action types**: Prefer 'approve_purchase_order' over just 'approve' if it adds clarity
 
-5. **Create feed entries after successful operations**: Use database transactions to ensure feed entry is only created if the main operation succeeds
+5. **Use title and body for comments**: When recording notes or comments, use the title and body fields:
+   ```php
+   'title' => 'Budget Approval Required',
+   'body' => 'This request requires additional budget approval before proceeding.'
+   ```
 
-6. **Handle exceptions gracefully**: If feed creation fails, log the error but don't block the main operation
+6. **Create feed entries after successful operations**: Use database transactions to ensure feed entry is only created if the main operation succeeds
+
+7. **Handle exceptions gracefully**: If feed creation fails, log the error but don't block the main operation
 
 ### Example Service Method with Feed Integration
 
@@ -340,31 +378,33 @@ class PurchaseRequestService
 The Feed model follows OctoberCMS conventions:
 - Extends `Model` base class
 - Uses `Validation` trait for automatic validation
-- Uses `SoftDelete` trait to preserve audit trail
+- Implements immutability via `beforeUpdate()` and `beforeDelete()` methods
 - Implements polymorphic relationships via `$morphTo` property
 - Provides query scopes for common filtering patterns
+- Supports title and body fields for notes/comments
 
-### Controller Architecture
+### No Backend Controller
 
-The Feeds controller is read-only by design:
-- Users cannot manually create or edit feed entries (these are created programmatically)
-- Preview mode is used for viewing feed details
-- List view provides search and filter capabilities
-- Bulk delete is available for administrators to clean up old entries
+The Feeder plugin does not include a backend controller or navigation menu by design:
+- Feed entries are system-generated and cannot be manually created or edited
+- Feeds are intended to be displayed in the context of their related models
+- Other plugins can use the Feed model's field and column configurations to display activity feeds
+- Dashboard widgets can be created in other plugins to show recent activity
 
 ### Security Considerations
 
-1. **Permission-based access**: Only users with `omsb.feeder.access_feeds` permission can view feeds
-2. **Soft deletes**: Feed entries are never permanently deleted to maintain audit trail integrity
-3. **User attribution**: Every feed entry must have a valid user_id (except system operations)
+1. **Permission-based access**: Only users with `omsb.feeder.access_feeds` permission can query feeds programmatically
+2. **Immutability**: Feed entries cannot be modified or deleted to maintain audit trail integrity
+3. **User attribution**: Every feed entry should have a valid user_id (except system operations)
 4. **JSON sanitization**: additional_data field should not contain sensitive information like passwords
+5. **Protected methods**: `beforeUpdate()` and `beforeDelete()` methods prevent accidental modifications
 
 ### Performance Considerations
 
 1. **Indexes**: Multiple indexes ensure fast queries for common filter patterns
-2. **Pagination**: Default 50 records per page balances usability and performance
-3. **Eager loading**: Use `with('user', 'feedable')` to avoid N+1 queries
-4. **Archival strategy**: Consider implementing periodic archival of old feed entries (>1 year) to a separate table
+2. **Eager loading**: Use `with('user', 'feedable')` to avoid N+1 queries
+3. **Archival strategy**: Consider implementing periodic archival of old feed entries (>1 year) to a separate table
+4. **Query optimization**: Use scopes and proper indexing for efficient data retrieval
 
 ## Future Enhancements
 
@@ -384,9 +424,15 @@ Potential areas for expansion:
 ### Feed entries not appearing
 
 1. Check that the feed entry was actually created (check database)
-2. Verify the user has `omsb.feeder.access_feeds` permission
-3. Check for soft deletes (deleted_at not null)
-4. Verify the feedable model exists and is not deleted
+2. Verify the user has `omsb.feeder.access_feeds` permission for programmatic access
+3. Verify the feedable model exists and is not deleted
+
+### Cannot modify or delete feed entries
+
+This is by design. Feed entries are immutable:
+1. **Modification attempts**: Will throw an exception with message "Feed records cannot be modified once created."
+2. **Deletion attempts**: Will fail silently (returns false) and record remains in database
+3. **Purpose**: Ensures audit trail integrity and prevents tampering with historical records
 
 ### Performance issues with large datasets
 
@@ -403,4 +449,4 @@ Potential areas for expansion:
 
 ## Conclusion
 
-The Feeder plugin provides a robust, centralized activity tracking system for all OMSB plugins. By following the usage guidelines and best practices outlined in this document, developers can ensure comprehensive audit trails across the entire application.
+The Feeder plugin provides a robust, centralized activity tracking system for all OMSB plugins. Feed records are immutable by design, ensuring a reliable audit trail that cannot be tampered with. By following the usage guidelines and best practices outlined in this document, developers can ensure comprehensive audit trails across the entire application.

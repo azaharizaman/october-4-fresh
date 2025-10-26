@@ -33,6 +33,11 @@ columns:
         sortable: true
         width: 100px
     
+    title:
+        label: Title
+        searchable: true
+        sortable: true
+    
     description:
         label: Description
         searchable: false

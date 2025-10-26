@@ -33,6 +33,19 @@ fields:
         span: right
         disabled: true
     
+    title:
+        label: Title
+        type: text
+        span: full
+        disabled: true
+    
+    body:
+        label: Body
+        type: textarea
+        size: large
+        span: full
+        disabled: true
+    
     additional_data:
         label: Additional Data
         type: codeeditor

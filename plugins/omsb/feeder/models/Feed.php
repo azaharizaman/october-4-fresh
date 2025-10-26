@@ -7,13 +7,14 @@ use Model;
  *
  * Tracks user activities across the system with polymorphic relationships
  * to any model that needs activity logging.
+ * 
+ * Feeds are system-generated and cannot be edited or deleted once created.
  *
  * @link https://docs.octobercms.com/4.x/extend/system/models.html
  */
 class Feed extends Model
 {
     use \October\Rain\Database\Traits\Validation;
-    use \October\Rain\Database\Traits\SoftDelete;
 
     /**
      * @var string table name
@@ -28,6 +29,8 @@ class Feed extends Model
         'action_type',
         'feedable_type',
         'feedable_id',
+        'title',
+        'body',
         'additional_data',
     ];
 
@@ -37,6 +40,8 @@ class Feed extends Model
     protected $nullable = [
         'user_id',
         'feedable_id',
+        'title',
+        'body',
     ];
 
     /**
@@ -56,9 +61,7 @@ class Feed extends Model
     /**
      * @var array dates used by the model
      */
-    protected $dates = [
-        'deleted_at'
-    ];
+    protected $dates = [];
 
     /**
      * @var array morphTo relationships
@@ -122,5 +125,27 @@ class Feed extends Model
     public function scopeByUser($query, int $userId)
     {
         return $query->where('user_id', $userId);
+    }
+
+    /**
+     * Prevent deletion of feed records
+     *
+     * @return bool
+     */
+    public function beforeDelete()
+    {
+        return false;
+    }
+
+    /**
+     * Prevent updates to feed records after creation
+     *
+     * @return void
+     */
+    public function beforeUpdate()
+    {
+        if ($this->exists && $this->isDirty()) {
+            throw new \Exception('Feed records cannot be modified once created.');
+        }
     }
 }

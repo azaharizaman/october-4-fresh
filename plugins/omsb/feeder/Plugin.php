@@ -69,14 +69,6 @@ class Plugin extends PluginBase
      */
     public function registerNavigation()
     {
-        return [
-            'feeder' => [
-                'label' => 'Activity Feed',
-                'url' => Backend::url('omsb/feeder/feeds'),
-                'icon' => 'icon-rss',
-                'permissions' => ['omsb.feeder.*'],
-                'order' => 500,
-            ],
-        ];
+        return [];
     }
 }

@@ -30,11 +30,14 @@ return new class extends Migration
             $table->string('feedable_type', 255)->index();
             $table->unsignedBigInteger('feedable_id')->index();
             
+            // Title and body for notes/comments
+            $table->string('title')->nullable();
+            $table->text('body')->nullable();
+            
             // Additional data as JSON
             $table->json('additional_data')->nullable();
             
             $table->timestamps();
-            $table->softDeletes();
             
             // Foreign key - Backend user relationship
             $table->unsignedInteger('user_id')->nullable();
@@ -48,7 +51,6 @@ return new class extends Migration
             $table->index('action_type', 'idx_feeds_action_type');
             $table->index('user_id', 'idx_feeds_user_id');
             $table->index('created_at', 'idx_feeds_created_at');
-            $table->index('deleted_at', 'idx_feeds_deleted_at');
         });
     }
 
