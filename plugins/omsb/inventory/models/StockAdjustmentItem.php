@@ -153,7 +153,12 @@ class StockAdjustmentItem extends Model
             $model->value_impact = $model->quantity_variance * $model->unit_cost;
             
             // If conversion factor not set, calculate it
-            if (!$model->conversion_factor_used && $model->quantity_variance_in_uom != 0) {
+            // Use epsilon for floating-point zero comparison
+            $epsilon = 1e-8;
+            if (
+                !$model->conversion_factor_used &&
+                abs($model->quantity_variance_in_uom) > $epsilon
+            ) {
                 $model->conversion_factor_used = $model->quantity_variance_in_default_uom / $model->quantity_variance_in_uom;
             }
             
