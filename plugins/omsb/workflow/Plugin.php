@@ -17,9 +17,9 @@ class Plugin extends PluginBase
     {
         return [
             'name' => 'Workflow',
-            'description' => 'No description provided yet...',
+            'description' => 'Workflow management system tracking workflow definitions, status transitions, and approval hierarchies for document-driven processes',
             'author' => 'Omsb',
-            'icon' => 'icon-leaf'
+            'icon' => 'icon-random'
         ];
     }
 
@@ -56,13 +56,31 @@ class Plugin extends PluginBase
      */
     public function registerPermissions()
     {
-        return []; // Remove this line to activate
-
         return [
-            'omsb.workflow.some_permission' => [
+            'omsb.workflow.access_all' => [
                 'tab' => 'Workflow',
-                'label' => 'Some permission'
+                'label' => 'Full Access to Workflow Management'
             ],
+            'omsb.workflow.manage_definitions' => [
+                'tab' => 'Workflow',
+                'label' => 'Manage Workflow Definitions'
+            ],
+            'omsb.workflow.manage_statuses' => [
+                'tab' => 'Workflow',
+                'label' => 'Manage Document Statuses'
+            ],
+            'omsb.workflow.manage_transitions' => [
+                'tab' => 'Workflow',
+                'label' => 'Manage Status Transitions'
+            ],
+            'omsb.workflow.manage_roles' => [
+                'tab' => 'Workflow',
+                'label' => 'Manage Approver Roles'
+            ],
+            'omsb.workflow.view_history' => [
+                'tab' => 'Workflow',
+                'label' => 'View Workflow History'
+            ]
         ];
     }
 
@@ -71,16 +89,50 @@ class Plugin extends PluginBase
      */
     public function registerNavigation()
     {
-        return []; // Remove this line to activate
-
         return [
             'workflow' => [
                 'label' => 'Workflow',
-                'url' => Backend::url('omsb/workflow/mycontroller'),
-                'icon' => 'icon-leaf',
+                'url' => Backend::url('omsb/workflow/workflowdefinitions'),
+                'icon' => 'icon-random',
                 'permissions' => ['omsb.workflow.*'],
-                'order' => 500,
-            ],
+                'order' => 350,
+                'sideMenu' => [
+                    'workflow_definitions' => [
+                        'label' => 'Workflow Definitions',
+                        'icon' => 'icon-sitemap',
+                        'url' => Backend::url('omsb/workflow/workflowdefinitions'),
+                        'permissions' => ['omsb.workflow.manage_definitions']
+                    ],
+                    'document_statuses' => [
+                        'label' => 'Document Statuses',
+                        'icon' => 'icon-flag',
+                        'url' => Backend::url('omsb/workflow/documentstatuses'),
+                        'permissions' => ['omsb.workflow.manage_statuses']
+                    ],
+                    'status_transitions' => [
+                        'label' => 'Status Transitions',
+                        'icon' => 'icon-exchange',
+                        'url' => Backend::url('omsb/workflow/statustransitions'),
+                        'permissions' => ['omsb.workflow.manage_transitions']
+                    ],
+                    'separator1' => [
+                        'label' => 'MANAGEMENT',
+                        'counter' => false
+                    ],
+                    'approver_roles' => [
+                        'label' => 'Approver Roles',
+                        'icon' => 'icon-users',
+                        'url' => Backend::url('omsb/workflow/approverroles'),
+                        'permissions' => ['omsb.workflow.manage_roles']
+                    ],
+                    'workflow_history' => [
+                        'label' => 'Workflow History',
+                        'icon' => 'icon-history',
+                        'url' => Backend::url('omsb/workflow/workflowhistory'),
+                        'permissions' => ['omsb.workflow.view_history']
+                    ]
+                ]
+            ]
         ];
     }
 }

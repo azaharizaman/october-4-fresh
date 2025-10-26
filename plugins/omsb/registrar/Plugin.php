@@ -17,9 +17,9 @@ class Plugin extends PluginBase
     {
         return [
             'name' => 'Registrar',
-            'description' => 'No description provided yet...',
+            'description' => 'Document numbering patterns and registration management system with customizable auto-incrementing sequences',
             'author' => 'Omsb',
-            'icon' => 'icon-leaf'
+            'icon' => 'icon-list-ol'
         ];
     }
 
@@ -56,13 +56,23 @@ class Plugin extends PluginBase
      */
     public function registerPermissions()
     {
-        return []; // Remove this line to activate
-
         return [
-            'omsb.registrar.some_permission' => [
+            'omsb.registrar.access_all' => [
                 'tab' => 'Registrar',
-                'label' => 'Some permission'
+                'label' => 'Full Access to Document Registration'
             ],
+            'omsb.registrar.manage_patterns' => [
+                'tab' => 'Registrar',
+                'label' => 'Manage Document Number Patterns'
+            ],
+            'omsb.registrar.manage_sequences' => [
+                'tab' => 'Registrar',
+                'label' => 'Manage Document Sequences'
+            ],
+            'omsb.registrar.view_registry' => [
+                'tab' => 'Registrar',
+                'label' => 'View Document Registry'
+            ]
         ];
     }
 
@@ -71,16 +81,34 @@ class Plugin extends PluginBase
      */
     public function registerNavigation()
     {
-        return []; // Remove this line to activate
-
         return [
             'registrar' => [
                 'label' => 'Registrar',
-                'url' => Backend::url('omsb/registrar/mycontroller'),
-                'icon' => 'icon-leaf',
+                'url' => Backend::url('omsb/registrar/documentpatterns'),
+                'icon' => 'icon-list-ol',
                 'permissions' => ['omsb.registrar.*'],
-                'order' => 500,
-            ],
+                'order' => 400,
+                'sideMenu' => [
+                    'document_patterns' => [
+                        'label' => 'Document Patterns',
+                        'icon' => 'icon-cog',
+                        'url' => Backend::url('omsb/registrar/documentpatterns'),
+                        'permissions' => ['omsb.registrar.manage_patterns']
+                    ],
+                    'document_sequences' => [
+                        'label' => 'Document Sequences',
+                        'icon' => 'icon-sort-numeric-asc',
+                        'url' => Backend::url('omsb/registrar/documentsequences'),
+                        'permissions' => ['omsb.registrar.manage_sequences']
+                    ],
+                    'document_registry' => [
+                        'label' => 'Document Registry',
+                        'icon' => 'icon-book',
+                        'url' => Backend::url('omsb/registrar/documentregistry'),
+                        'permissions' => ['omsb.registrar.view_registry']
+                    ]
+                ]
+            ]
         ];
     }
 }
