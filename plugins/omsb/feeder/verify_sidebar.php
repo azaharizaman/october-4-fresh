@@ -58,7 +58,7 @@ if (method_exists(Feed::class, 'getForDocument')) {
         foreach ($params as $param) {
             $paramName = $param->getName();
             $paramType = $param->hasType() ? $param->getType()->getName() : 'mixed';
-            $defaultValue = $param->isDefaultValueAvailable() ? $param->getDefaultValue() : 'required';
+            $defaultValue = $param->isDefaultValueAvailable() ? var_export($param->getDefaultValue(), true) : 'required';
             echo "     - \$$paramName ($paramType) = $defaultValue\n";
         }
     } catch (Exception $e) {
