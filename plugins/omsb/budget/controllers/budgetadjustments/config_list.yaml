@@ -1,0 +1,24 @@
+# ===================================
+#  List Behavior Config
+# ===================================
+
+list: $/omsb/budget/models/budgetadjustment/columns.yaml
+modelClass: Omsb\Budget\Models\BudgetAdjustment
+title: Manage Budget Adjustments
+recordUrl: omsb/budget/budgetadjustments/update/:id
+noRecordsMessage: backend::lang.list.no_records
+recordsPerPage: 20
+showPageNumbers: true
+showSetup: true
+showSorting: true
+
+defaultSort:
+    column: created_at
+    direction: desc
+
+showCheckboxes: true
+
+toolbar:
+    buttons: list_toolbar
+    search:
+        prompt: backend::lang.list.search_prompt

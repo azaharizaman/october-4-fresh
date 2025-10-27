@@ -159,6 +159,287 @@ Approval::create([
 
 ---
 
+## October 27, 2025 - Budget Plugin Implementation
+
+### 🏗️ **Architecture Change: New Budget Management Plugin**
+
+#### **Background**
+Previously, budget functionality was planned to be part of the Procurement plugin. However, budget management deserves its own dedicated plugin due to its cross-cutting nature and integration with multiple systems (Procurement, Organization, Workflow, Registrar).
+
+#### **Changes Made**
+
+##### **1. New Budget Plugin (`omsb/budget`)**
+Created a standalone plugin for comprehensive budget management with the following structure:
+
+**Core Models:**
+1. **Budget** - Main budget entity (NOT a controlled document)
+   - Budget code: Free input field (e.g., `BGT/SGH/FEMS/MTC/5080190/25`)
+   - Yearly budget allocations with effective date ranges
+   - Associated with GL Accounts and Sites
+   - Optional service department assignment
+   - Status tracking: draft → approved → active → expired/cancelled
+
+2. **BudgetTransfer** - Intersite budget transfers (Controlled Document)
+   - Requires document number from Registrar plugin
+   - Must be between different sites (intersite requirement enforced)
+   - Tracks outward/inward transfer types
+   - Full workflow support with approval tracking
+
+3. **BudgetAdjustment** - Budget amount modifications (Controlled Document)
+   - Requires document number from Registrar plugin
+   - Supports increase/decrease adjustments
+   - Amount automatically normalized based on type
+   - Requires justification for all adjustments
+
+4. **BudgetReallocation** - Same-site budget reallocations (Controlled Document)
+   - Requires document number from Registrar plugin
+   - Must be within same site (enforced validation)
+   - Reallocates between different GL accounts
+   - Validates GL accounts belong to budget's site
+
+##### **2. Database Schema**
+```sql
+-- Core budget table (NOT controlled document)
+omsb_budget_budgets
+- budget_code VARCHAR(100)           -- Free input
+- description VARCHAR(500)
+- year INT
+- effective_from DATE
+- effective_to DATE
+- allocated_amount DECIMAL(15,2)
+- status ENUM
+- gl_account_id FK
+- site_id FK
+- service_code VARCHAR(10) NULLABLE
+- created_by, approved_by FK to backend_users
+
+-- Transaction tables (ALL controlled documents)
+omsb_budget_transfers
+- document_number VARCHAR(100) UNIQUE -- From registrar
+- transfer_type ENUM(outward, inward)
+- from_budget_id, to_budget_id FK
+- amount DECIMAL(15,2)
+- status ENUM
+
+omsb_budget_adjustments
+- document_number VARCHAR(100) UNIQUE -- From registrar
+- adjustment_type ENUM(increase, decrease)
+- adjustment_amount DECIMAL(15,2)
+- budget_id FK
+- status ENUM
+
+omsb_budget_reallocations
+- document_number VARCHAR(100) UNIQUE -- From registrar
+- from_gl_account_id, to_gl_account_id FK
+- budget_id FK
+- amount DECIMAL(15,2)
+- status ENUM
+```
+
+#### **Business Logic Implementation**
+
+##### **Calculated Fields (Real-time)**
+The Budget model includes calculated fields that provide budget status:
+
+```php
+// Computed on-the-fly (not stored in database)
+$budget->total_transferred_out    // Sum of approved outward transfers
+$budget->total_transferred_in     // Sum of approved inward transfers
+$budget->total_adjustments        // Sum of approved adjustments
+$budget->total_reallocations      // Sum of approved reallocations
+$budget->current_budget           // allocated + in - out + adjustments + reallocations
+$budget->utilized_amount          // From Purchase Orders (future integration)
+$budget->available_balance        // current_budget - utilized_amount
+$budget->utilization_percentage   // (utilized / current) * 100
+```
+
+##### **Budget Validation Rules**
+
+**BudgetTransfer Validation:**
+```php
+// Must be intersite (different sites)
+if ($fromBudget->site_id === $toBudget->site_id) {
+    throw ValidationException(
+        'Budget transfers must be between different sites. 
+         Use Budget Reallocation for same-site transfers.'
+    );
+}
+```
+
+**BudgetReallocation Validation:**
+```php
+// Must be same site
+if ($fromGlAccount->site_id !== $budget->site_id || 
+    $toGlAccount->site_id !== $budget->site_id) {
+    throw ValidationException(
+        'Reallocation GL accounts must belong to budget\'s site.'
+    );
+}
+```
+
+##### **Budget Checking Methods**
+```php
+// Check if budget has sufficient balance for PO
+$budget->hasSufficientBalance($amount);  // returns bool
+$budget->wouldExceedBudget($amount);     // returns bool
+
+// Used by Procurement plugin to determine approval flow
+if ($budget->wouldExceedBudget($poAmount)) {
+    // Follow non-budgeted purchase approval flow
+}
+```
+
+#### **Integration Points**
+
+##### **Organization Plugin**
+- **Sites**: Budgets belong to organizational sites
+- **GL Accounts**: Each budget associated with specific GL account
+  - Only transactable (non-header) GL accounts selectable
+  - GL accounts filtered by site in reallocations
+- **Service Settings**: Optional service code for department budgets
+- **Staff/Approval**: Creator and approver tracking
+
+##### **Registrar Plugin**
+- **Document Numbers**: All budget transactions require document numbers
+- **Document Patterns**: Each transaction type can have unique numbering pattern
+  - Budget Transfer: e.g., `BT-SITE-YYYY-#####`
+  - Budget Adjustment: e.g., `BA-SITE-YYYY-#####`
+  - Budget Reallocation: e.g., `BR-SITE-YYYY-#####`
+
+##### **Workflow Plugin**
+- **Status Transitions**: Budget transactions follow workflow definitions
+- **Approval Flows**: Multi-level approvals based on amount and hierarchy
+- **WorkflowInstance**: Tracks ongoing approval process
+- **WorkflowAction**: Records individual approval actions
+
+##### **Procurement Plugin (Future Integration)**
+- **Budget Utilization**: Track PO amounts against budgets
+- **Exceed Budget Checks**: Determine if PO exceeds available budget
+- **Non-budgeted Flow**: POs exceeding budget follow alternative approval
+- **GL Account Matching**: Link POs to budgets via GL account + site + service
+
+##### **Feeder Plugin**
+- **Activity Tracking**: All budget and transaction activities logged
+- **Audit Trail**: Complete history of budget changes and approvals
+- **Feed Items**: User-friendly activity feed for budget lifecycle
+
+#### **Backend Interface**
+
+##### **Navigation Structure**
+```
+Budget (Main Menu)
+├── Budgets (Core management)
+├── TRANSACTIONS (Separator)
+├── Budget Transfers (Intersite)
+├── Budget Adjustments (Increase/Decrease)
+├── Budget Reallocations (Same-site)
+├── REPORTS (Separator)
+└── Budget Reports (Analytics)
+```
+
+##### **Budget Form Features**
+- **Primary Tab**: Core budget information
+- **Budget Details Tab**: Real-time calculated fields display
+- **Transaction Tabs**: 
+  - Outward Transfers (relation controller)
+  - Inward Transfers (relation controller)
+  - Adjustments (relation controller)
+  - Reallocations (relation controller)
+- **Audit Trail Tab**: Creation and approval information
+
+##### **Form Validations**
+- Budget code: Required, free input (no format enforcement)
+- Effective dates: End date must be after start date
+- Amount: Must be non-negative
+- GL Account: Must be active and transactable
+- Status: Controls editability (only draft is editable)
+
+#### **Permissions Structure**
+
+```php
+'omsb.budget.access_all'            // Full access
+'omsb.budget.manage_budgets'        // Manage budgets
+'omsb.budget.budget_transfers'      // Manage transfers
+'omsb.budget.budget_adjustments'    // Manage adjustments
+'omsb.budget.budget_reallocations'  // Manage reallocations
+'omsb.budget.view_reports'          // View budget reports
+```
+
+#### **Design Decisions**
+
+##### **1. Budget Code: Free Input vs. Auto-Generated**
+**Decision**: Free input field  
+**Rationale**: 
+- Budget codes follow complex organizational patterns
+- Include site codes, service codes, GL account numbers, year
+- Example: `BGT/SGH/FEMS/MTC/5080190/25`
+- Different sites/departments may have different conventions
+- Flexibility prioritized over standardization
+
+##### **2. Budget vs. Budget Transactions: Document Status**
+**Decision**: Budget is NOT a controlled document  
+**Rationale**:
+- Budget itself is a planning document
+- Budget transactions (transfers, adjustments, reallocations) are operational
+- Only operational documents need formal document numbers and workflows
+- Reduces overhead while maintaining control where needed
+
+##### **3. Calculated Fields: Computed vs. Stored**
+**Decision**: Computed on-the-fly  
+**Rationale**:
+- Always reflects current state from transactions
+- No risk of data inconsistency
+- Simplifies transaction processing (no aggregate updates)
+- Performance acceptable for typical budget record counts
+
+##### **4. Transfer vs. Reallocation: Why Two Models?**
+**Decision**: Separate models with validation  
+**Rationale**:
+- Different business meanings (intersite vs same-site)
+- Different approval requirements and workflows
+- Enforced separation prevents user errors
+- Clear audit trail of movement types
+
+#### **Benefits Achieved**
+
+✅ **Comprehensive Budget Tracking**: Full lifecycle from allocation to utilization  
+✅ **Flexible Budget Codes**: Accommodates diverse organizational patterns  
+✅ **Real-time Budget Status**: Calculated fields always current  
+✅ **Transaction Integrity**: Enforced business rules for transfers/reallocations  
+✅ **Integration Ready**: Prepared for Procurement PO budget checking  
+✅ **Audit Trail**: Complete history via Feeder and Workflow plugins  
+✅ **Scalable Design**: Clean separation between budget and transactions  
+
+#### **Future Enhancements**
+
+**Phase 2 (Pending):**
+- Budget utilization tracking from Purchase Orders
+- Non-budgeted purchase approval flow integration
+- Registrar integration for auto-document numbering
+
+**Phase 3 (Future):**
+- Budget reports and analytics dashboard
+- Budget forecasting and planning tools
+- Multi-year budget comparison
+- Budget performance metrics
+- Budget allocation recommendations (AI-powered)
+
+#### **Technical Metrics**
+- **Database Tables**: 4 new tables (1 core + 3 transactions)
+- **Models**: 4 models with full validation and relationships
+- **Controllers**: 4 backend controllers with form/list behaviors
+- **YAML Configs**: 24+ configuration files for forms, lists, columns, fields
+- **Code Volume**: ~2,500 lines of PHP code + configurations
+- **Test Coverage**: Pending (test infrastructure setup required)
+
+#### **Migration Impact**
+- **Breaking Changes**: None (new plugin, no existing dependencies)
+- **Database Migration**: Standard October CMS migration system
+- **User Training**: Required for budget staff and approvers
+- **Documentation**: Complete README.md with examples
+
+---
+
 ## Future Architecture Changes
 
 ### Planned Q1 2026
