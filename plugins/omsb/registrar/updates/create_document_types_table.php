@@ -54,8 +54,14 @@ class CreateDocumentTypesTable extends Migration
             $table->softDeletes();
             
             // Foreign keys
-            $table->foreign('created_by')->references('id')->on('backend_users')->nullOnDelete();
-            $table->foreign('updated_by')->references('id')->on('backend_users')->nullOnDelete();
+            $table->foreign('created_by', 'fk_doc_type_creator')
+                ->references('id')
+                ->on('backend_users')
+                ->nullOnDelete();
+            $table->foreign('updated_by', 'fk_doc_type_updater')
+                ->references('id')
+                ->on('backend_users')
+                ->nullOnDelete();
             
             // Indexes
             $table->index(['code', 'is_active']);

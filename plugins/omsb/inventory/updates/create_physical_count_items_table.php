@@ -32,23 +32,23 @@ return new class extends Migration
             
             // Foreign key - Physical Count header
             $table->foreignId('physical_count_id')
-                ->constrained('omsb_inventory_physical_counts')
+                ->constrained('omsb_inventory_physical_counts', 'id', 'fk_pc_items_pc')
                 ->cascadeOnDelete();
                 
             // Foreign key - Warehouse Item (SKU)
             $table->foreignId('warehouse_item_id')
-                ->constrained('omsb_inventory_warehouse_items')
+                ->constrained('omsb_inventory_warehouse_items', 'id', 'fk_pc_items_wh_item')
                 ->restrictOnDelete();
                 
             // Foreign key - Counter staff
             $table->foreignId('counter_staff_id')
                 ->nullable()
-                ->constrained('omsb_organization_staff')
+                ->constrained('omsb_organization_staff', 'id', 'fk_pc_items_counter')
                 ->nullOnDelete();
                 
             // Foreign key - Count UOM
             $table->foreignId('count_uom_id')
-                ->constrained('omsb_inventory_unit_of_measures')
+                ->constrained('omsb_inventory_unit_of_measures', 'id', 'fk_pc_items_count_uom')
                 ->restrictOnDelete();
             
             // Quantities in different UOMs for conversion tracking

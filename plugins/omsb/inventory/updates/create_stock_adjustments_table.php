@@ -21,12 +21,14 @@ return new class extends Migration
             
             $table->id();
             $table->string('adjustment_number')->unique(); // Document number from Registrar
+            $table->string('document_number', 120)->nullable(); // Controlled document number
             $table->date('adjustment_date');
             $table->string('reason_code', 50); // damage, theft, count_variance, expired, etc.
             $table->string('reference_document')->nullable(); // Source of adjustment
             $table->decimal('total_value_impact', 15, 2)->default(0); // Financial impact
             $table->text('notes')->nullable();
             $table->string('status', 20)->default('draft'); // draft, submitted, approved, completed
+            $table->string('previous_status', 50)->nullable(); // Track previous status for audit
             $table->timestamps();
             $table->softDeletes();
             
@@ -34,6 +36,12 @@ return new class extends Migration
             $table->foreignId('warehouse_id')
                 ->constrained('omsb_inventory_warehouses')
                 ->restrictOnDelete();
+            
+            // Foreign key - Document Registry (for controlled document tracking)
+            $table->foreignId('registry_id')
+                ->nullable()
+                ->constrained('omsb_registrar_document_registries')
+                ->nullOnDelete();
                 
             // Foreign key - Approved by staff
             $table->foreignId('approved_by')
@@ -47,6 +55,7 @@ return new class extends Migration
             
             // Indexes
             $table->index('adjustment_number', 'idx_stock_adj_number');
+            $table->index('document_number', 'idx_stock_adj_document_number');
             $table->index('adjustment_date', 'idx_stock_adj_date');
             $table->index('reason_code', 'idx_stock_adj_reason');
             $table->index('status', 'idx_stock_adj_status');

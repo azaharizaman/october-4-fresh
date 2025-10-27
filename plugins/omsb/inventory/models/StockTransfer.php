@@ -2,6 +2,7 @@
 
 use Model;
 use BackendAuth;
+use Omsb\Registrar\Traits\HasControlledDocumentNumber;
 use Carbon\Carbon;
 use ValidationException;
 
@@ -40,6 +41,7 @@ class StockTransfer extends Model
 {
     use \October\Rain\Database\Traits\Validation;
     use \October\Rain\Database\Traits\SoftDelete;
+    use HasControlledDocumentNumber;
 
     /**
      * @var string table name
@@ -47,10 +49,22 @@ class StockTransfer extends Model
     public $table = 'omsb_inventory_stock_transfers';
 
     /**
+     * @var string document type code for registrar
+     */
+    protected string $documentTypeCode = 'STFR';
+
+    /**
+     * @var array statuses that lock the document
+     */
+    protected array $protectedStatuses = ['in_transit', 'received'];
+
+    /**
      * @var array fillable fields
      */
     protected $fillable = [
         'transfer_number',
+        'document_number',
+        'registry_id',
         'from_warehouse_id',
         'to_warehouse_id',
         'requested_by',
@@ -81,7 +95,9 @@ class StockTransfer extends Model
         'transportation_method',
         'tracking_number',
         'notes',
-        'created_by'
+        'created_by',
+        'registry_id',
+        'previous_status'
     ];
 
     /**

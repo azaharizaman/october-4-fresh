@@ -4,6 +4,7 @@ use Model;
 use BackendAuth;
 use Carbon\Carbon;
 use ValidationException;
+use Omsb\Registrar\Traits\HasControlledDocumentNumber;
 
 /**
  * MrnReturn Model - Material Received Note Return
@@ -17,16 +18,30 @@ class MrnReturn extends Model
 {
     use \October\Rain\Database\Traits\Validation;
     use \October\Rain\Database\Traits\SoftDelete;
+    use HasControlledDocumentNumber;
 
+    /**
+     * @var string table name
+     */
     public $table = 'omsb_inventory_mrn_returns';
 
+    /**
+     * @var string document type code for registrar
+     */
+    protected string $documentTypeCode = 'MRNR';
+
+    /**
+     * @var array statuses that lock the document
+     */
+    protected array $protectedStatuses = ['approved', 'completed'];
+
     protected $fillable = [
-        'return_number', 'mrn_id', 'warehouse_id', 'return_date',
+        'return_number', 'document_number', 'registry_id', 'mrn_id', 'warehouse_id', 'return_date',
         'return_reason', 'notes', 'total_return_value', 'status',
         'returned_by', 'approved_by'
     ];
 
-    protected $nullable = ['notes', 'approved_by', 'created_by'];
+    protected $nullable = ['notes', 'approved_by', 'created_by', 'registry_id', 'previous_status'];
 
     public $rules = [
         'return_number' => 'required|max:255|unique:omsb_inventory_mrn_returns,return_number',

@@ -2,6 +2,7 @@
 
 use Model;
 use BackendAuth;
+use Omsb\Registrar\Traits\HasControlledDocumentNumber;
 use Carbon\Carbon;
 
 /**
@@ -16,16 +17,30 @@ class MriReturn extends Model
 {
     use \October\Rain\Database\Traits\Validation;
     use \October\Rain\Database\Traits\SoftDelete;
+    use HasControlledDocumentNumber;
 
+    /**
+     * @var string table name
+     */
     public $table = 'omsb_inventory_mri_returns';
 
+    /**
+     * @var string document type code for registrar
+     */
+    protected string $documentTypeCode = 'MRIR';
+
+    /**
+     * @var array statuses that lock the document
+     */
+    protected array $protectedStatuses = ['approved', 'completed'];
+
     protected $fillable = [
-        'return_number', 'mri_id', 'warehouse_id', 'return_date',
+        'return_number', 'document_number', 'registry_id', 'mri_id', 'warehouse_id', 'return_date',
         'return_reason', 'notes', 'total_return_value', 'status',
         'returned_by', 'received_by'
     ];
 
-    protected $nullable = ['notes', 'received_by', 'created_by'];
+    protected $nullable = ['notes', 'received_by', 'created_by', 'registry_id', 'previous_status'];
 
     public $rules = [
         'return_number' => 'required|max:255|unique:omsb_inventory_mri_returns,return_number',

@@ -38,15 +38,15 @@ return new class extends Migration
                 ->cascadeOnDelete();
                 
             // Foreign key - Purchase Order Line Item (origin)
-            $table->foreignId('purchase_order_line_item_id')
+            $table->foreignId('purchase_order_item_id')
                 ->nullable()
-                ->constrained('omsb_procurement_purchase_order_line_items')
+                ->constrained('omsb_procurement_purchase_order_items')
                 ->nullOnDelete();
                 
             // Foreign key - MRN Line Item (receipt record)
-            $table->foreignId('mrn_line_item_id')
+            $table->foreignId('mrn_item_id')
                 ->nullable()
-                ->constrained('omsb_inventory_mrn_line_items')
+                ->constrained('omsb_inventory_mrn_items')
                 ->nullOnDelete();
             
             // Foreign key - Created by user (backend_users)

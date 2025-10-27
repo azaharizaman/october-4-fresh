@@ -80,6 +80,28 @@ The report widget classes reside inside the reportwidgets directory of a plugin.
     $table->unsignedInteger('user_id')->nullable();
     $table->foreign('user_id')->references('id')->on('backend_users')->nullOnDelete();
     ```
+- **Foreign Key Constraint Naming**: **CRITICAL** - MySQL limits constraint names to 64 characters. When using `foreignId()->constrained()`, Laravel auto-generates names that often exceed this limit for long table names (common in OMSB plugins with prefixes like `omsb_procurement_*`).
+  - **Always explicitly name foreign key constraints** using the third parameter of `constrained()`:
+    ```php
+    // ❌ BAD - Auto-generated name exceeds 64 chars
+    $table->foreignId('purchase_request_id')
+        ->constrained('omsb_procurement_purchase_requests')
+        ->onDelete('cascade');
+    
+    // ✅ GOOD - Explicit short name
+    $table->foreignId('purchase_request_id')
+        ->constrained('omsb_procurement_purchase_requests', 'id', 'fk_pr_items_pr')
+        ->onDelete('cascade');
+    ```
+  - **Naming Convention**: Use `fk_{short_table}_{short_reference}` pattern:
+    - Line item tables: `fk_pr_items_pr`, `fk_po_items_po`, `fk_grn_items_grn`
+    - Cross-plugin refs: `fk_mrn_items_po_item`, `fk_st_items_purchaseable`
+    - UOM refs: `fk_mrn_items_rcv_uom`, `fk_mri_items_issue_uom`
+    - Staff refs: `fk_pc_items_counter`, `fk_grn_rcvd_by`
+  - **Total constraint name must be ≤64 characters** including table prefix
+  - This applies to **all line item tables** in Procurement and Inventory plugins
+    $table->foreign('user_id')->references('id')->on('backend_users')->nullOnDelete();
+    ```
 
 ## Project-Specific Conventions 
 - **Service Layer**: Business logic is extracted into service classes (e.g., `AdjustmentService`, `PurchaseRequestService`) that handle complex operations and maintain separation of concerns.

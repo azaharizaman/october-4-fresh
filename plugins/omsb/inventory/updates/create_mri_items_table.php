@@ -33,17 +33,17 @@ return new class extends Migration
             
             // Foreign key - MRI header
             $table->foreignId('mri_id')
-                ->constrained('omsb_inventory_mris')
+                ->constrained('omsb_inventory_mris', 'id', 'fk_mri_items_mri')
                 ->cascadeOnDelete();
                 
             // Foreign key - Warehouse Item (SKU)
             $table->foreignId('warehouse_item_id')
-                ->constrained('omsb_inventory_warehouse_items')
+                ->constrained('omsb_inventory_warehouse_items', 'id', 'fk_mri_items_wh_item')
                 ->restrictOnDelete();
                 
             // Foreign key - Issue UOM
             $table->foreignId('issue_uom_id')
-                ->constrained('omsb_inventory_unit_of_measures')
+                ->constrained('omsb_inventory_unit_of_measures', 'id', 'fk_mri_items_issue_uom')
                 ->restrictOnDelete();
             
             // Quantities in different UOMs for conversion tracking

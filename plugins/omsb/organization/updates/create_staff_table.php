@@ -51,8 +51,12 @@ return new class extends Migration
                 ->constrained('omsb_organization_companies')
                 ->nullOnDelete();
             
+            // Service code for department/service assignment
+            $table->string('service_code', 10)->nullable();
+            
             // Indexes
             $table->index('staff_number', 'idx_staff_staff_number');
+            $table->index('service_code');
             $table->index('deleted_at', 'idx_staff_deleted_at');
         });
     }

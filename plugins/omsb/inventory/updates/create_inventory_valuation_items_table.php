@@ -30,12 +30,12 @@ return new class extends Migration
             
             // Foreign key - Inventory Valuation header
             $table->foreignId('inventory_valuation_id')
-                ->constrained('omsb_inventory_inventory_valuations')
+                ->constrained('omsb_inventory_inventory_valuations', 'id', 'fk_inv_val_items_val')
                 ->cascadeOnDelete();
                 
             // Foreign key - Warehouse Item (SKU)
             $table->foreignId('warehouse_item_id')
-                ->constrained('omsb_inventory_warehouse_items')
+                ->constrained('omsb_inventory_warehouse_items', 'id', 'fk_inv_val_items_wh')
                 ->restrictOnDelete();
             
             // Indexes

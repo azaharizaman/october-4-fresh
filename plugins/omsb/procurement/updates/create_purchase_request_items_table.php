@@ -31,12 +31,12 @@ return new class extends Migration
             
             // Foreign keys
             $table->foreignId('purchase_request_id')
-                ->constrained('omsb_procurement_purchase_requests')
+                ->constrained('omsb_procurement_purchase_requests', 'id', 'fk_pr_items_pr')
                 ->onDelete('cascade');
             
             $table->foreignId('purchaseable_item_id')
                 ->nullable()
-                ->constrained('omsb_procurement_purchaseable_items')
+                ->constrained('omsb_procurement_purchaseable_items', 'id', 'fk_pr_items_purchaseable')
                 ->nullOnDelete();
             
             // Indexes

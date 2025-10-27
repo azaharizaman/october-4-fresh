@@ -21,8 +21,8 @@ use Carbon\Carbon;
  * @property string|null $supplier_lot_number Supplier's lot reference
  * @property string $status Status (active, expired, quarantine, issued)
  * @property string|null $notes Additional information
- * @property int|null $purchase_order_line_item_id Origin PO line
- * @property int|null $mrn_line_item_id Receipt record
+ * @property int|null $purchase_order_item_id Origin PO line
+ * @property int|null $mrn_item_id Receipt record
  * @property int|null $created_by Backend user who created this
  * @property \Carbon\Carbon $created_at
  * @property \Carbon\Carbon $updated_at
@@ -54,8 +54,8 @@ class LotBatch extends Model
         'supplier_lot_number',
         'status',
         'notes',
-        'purchase_order_line_item_id',
-        'mrn_line_item_id'
+        'purchase_order_item_id',
+        'mrn_item_id'
     ];
 
     /**
@@ -67,8 +67,8 @@ class LotBatch extends Model
         'manufacture_date',
         'supplier_lot_number',
         'notes',
-        'purchase_order_line_item_id',
-        'mrn_line_item_id',
+        'purchase_order_item_id',
+        'mrn_item_id',
         'created_by'
     ];
 
@@ -124,14 +124,14 @@ class LotBatch extends Model
             WarehouseItem::class
         ],
         // TODO: Reference to Procurement plugin - PurchaseOrderLineItem model
-        'purchase_order_line_item' => [
+        'purchase_order_item' => [
             'Omsb\Procurement\Models\PurchaseOrderLineItem',
-            'key' => 'purchase_order_line_item_id'
+            'key' => 'purchase_order_item_id'
         ],
         // TODO: Reference to MrnItem model (will be implemented later)
-        'mrn_line_item' => [
+        'mrn_item' => [
             MrnItem::class,
-            'key' => 'mrn_line_item_id'
+            'key' => 'mrn_item_id'
         ],
         'creator' => [
             \Backend\Models\User::class,

@@ -4,6 +4,7 @@ use Model;
 use BackendAuth;
 use Carbon\Carbon;
 use ValidationException;
+use Omsb\Registrar\Traits\HasControlledDocumentNumber;
 
 /**
  * Mrn Model - Material Received Note
@@ -37,6 +38,7 @@ class Mrn extends Model
 {
     use \October\Rain\Database\Traits\Validation;
     use \October\Rain\Database\Traits\SoftDelete;
+    use HasControlledDocumentNumber;
 
     /**
      * @var string table name
@@ -44,10 +46,23 @@ class Mrn extends Model
     public $table = 'omsb_inventory_mrns';
 
     /**
+     * @var string document type code for registrar
+     */
+    protected string $documentTypeCode = 'MRN';
+
+    /**
+     * @var array statuses that lock the document
+     */
+    protected array $protectedStatuses = ['approved', 'completed'];
+
+    /**
      * @var array fillable fields
      */
     protected $fillable = [
+        // TO DO: mrn_number is to be removed as it is ow redundant since we already have document_number
         'mrn_number',
+        'document_number',
+        'registry_id',
         'warehouse_id',
         'goods_receipt_note_id',
         'received_date',
@@ -67,12 +82,14 @@ class Mrn extends Model
      */
     protected $nullable = [
         'goods_receipt_note_id',
+        'registry_id',
         'delivery_note_number',
         'vehicle_number',
         'driver_name',
         'received_time',
         'remarks',
         'approved_by',
+        'previous_status',
         'created_by'
     ];
 

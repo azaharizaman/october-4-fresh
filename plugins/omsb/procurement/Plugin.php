@@ -10,6 +10,7 @@ use System\Classes\PluginBase;
  */
 class Plugin extends PluginBase
 {
+    public $require = ['Omsb.Organization', 'Omsb.Registrar', 'Omsb.Workflow', 'Omsb.Feeder'];
     /**
      * pluginDetails about this plugin.
      */

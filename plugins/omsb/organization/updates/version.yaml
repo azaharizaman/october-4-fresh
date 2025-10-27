@@ -1,17 +1,11 @@
 v1.0.1: First version of Organization
 v1.0.2: 
-  - 'Initial Migration'
+  - 'Initial Migration with service settings and financial periods'
   - create_companies_table.php
   - create_addresses_table.php
   - create_sites_table.php
   - create_staff_table.php
   - create_approvals_table.php
-v1.0.3:
-  - 'Add GL Accounts table'
   - create_gl_accounts_table.php
-v1.0.4:
-  - 'Add Service Department settings'
   - create_service_settings_table.php
-v1.0.5:
-  - 'Add service code to staff table'
-  - add_service_code_to_staff_table.php
+  - create_financial_periods_table.php

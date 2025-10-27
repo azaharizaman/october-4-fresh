@@ -35,24 +35,24 @@ return new class extends Migration
             
             // Foreign key - MRN header
             $table->foreignId('mrn_id')
-                ->constrained('omsb_inventory_mrns')
+                ->constrained('omsb_inventory_mrns', 'id', 'fk_mrn_items_mrn')
                 ->cascadeOnDelete();
                 
             // Foreign key - Warehouse Item (SKU)
             $table->foreignId('warehouse_item_id')
-                ->constrained('omsb_inventory_warehouse_items')
+                ->constrained('omsb_inventory_warehouse_items', 'id', 'fk_mrn_items_wh_item')
                 ->restrictOnDelete();
                 
             // Foreign key - Purchase Order Line Item (source)
             // NOTE: This FK references Procurement plugin - needs to be created there first
             $table->foreignId('purchase_order_item_id')
                 ->nullable()
-                ->constrained('omsb_procurement_purchase_order_items')
+                ->constrained('omsb_procurement_purchase_order_items', 'id', 'fk_mrn_items_po_item')
                 ->nullOnDelete();
                 
             // Foreign key - Received UOM
             $table->foreignId('received_uom_id')
-                ->constrained('omsb_inventory_unit_of_measures')
+                ->constrained('omsb_inventory_unit_of_measures', 'id', 'fk_mrn_items_rcv_uom')
                 ->restrictOnDelete();
             
             // Quantities in different UOMs for conversion tracking

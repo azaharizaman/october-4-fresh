@@ -34,39 +34,39 @@ return new class extends Migration
             
             // Foreign key - MRN Return header
             $table->foreignId('mrn_return_id')
-                ->constrained('omsb_inventory_mrn_returns')
+                ->constrained('omsb_inventory_mrn_returns', 'id', 'fk_mrn_ret_items_ret')
                 ->cascadeOnDelete();
                 
             // Foreign key - Original MRN Line Item being returned
             $table->foreignId('original_mrn_item_id')
-                ->constrained('omsb_inventory_mrn_items')
+                ->constrained('omsb_inventory_mrn_items', 'id', 'fk_mrn_ret_items_orig')
                 ->cascadeOnDelete();
                 
             // Foreign key - Warehouse Item
             $table->foreignId('warehouse_item_id')
-                ->constrained('omsb_inventory_warehouse_items')
+                ->constrained('omsb_inventory_warehouse_items', 'id', 'fk_mrn_ret_items_wh')
                 ->cascadeOnDelete();
                 
             // Foreign key - Purchaseable Item
             $table->foreignId('purchaseable_item_id')
-                ->constrained('omsb_procurement_purchaseable_items')
+                ->constrained('omsb_procurement_purchaseable_items', 'id', 'fk_mrn_ret_items_purch')
                 ->cascadeOnDelete();
                 
             // Foreign key - UOM
             $table->foreignId('uom_id')
-                ->constrained('omsb_inventory_unit_of_measures')
+                ->constrained('omsb_inventory_unit_of_measures', 'id', 'fk_mrn_ret_items_uom')
                 ->cascadeOnDelete();
                 
             // Foreign key - Serial Number (if applicable)
             $table->foreignId('serial_number_id')
                 ->nullable()
-                ->constrained('omsb_inventory_serial_numbers')
+                ->constrained('omsb_inventory_serial_numbers', 'id', 'fk_mrn_ret_items_sn')
                 ->nullOnDelete();
                 
             // Foreign key - Lot Batch (if applicable)
             $table->foreignId('lot_batch_id')
                 ->nullable()
-                ->constrained('omsb_inventory_lot_batches')
+                ->constrained('omsb_inventory_lot_batches', 'id', 'fk_mrn_ret_items_lot')
                 ->nullOnDelete();
             
             // Unique constraint - one line number per return document

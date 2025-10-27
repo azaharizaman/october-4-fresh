@@ -38,6 +38,9 @@ return new class extends Migration
                 'other'
             ])->default('consumable');
             
+            // Service code for department/service assignment
+            $table->string('service_code', 10)->nullable();
+            
             // Pricing
             $table->decimal('standard_cost', 15, 2)->nullable();
             $table->decimal('last_purchase_cost', 15, 2)->nullable();
@@ -63,7 +66,7 @@ return new class extends Migration
                 ->constrained('omsb_procurement_item_categories')
                 ->nullOnDelete();
                 
-            $table->unsignedInteger('gl_account_id')->nullable();
+            $table->unsignedBigInteger('gl_account_id')->nullable();
             $table->foreign('gl_account_id')
                 ->references('id')
                 ->on('omsb_organization_gl_accounts')
@@ -79,6 +82,7 @@ return new class extends Migration
             
             // Indexes
             $table->index('code', 'idx_purchaseable_items_code');
+            $table->index('service_code');
             $table->index('is_inventory_item', 'idx_purchaseable_items_inventory');
             $table->index('item_type', 'idx_purchaseable_items_type');
             $table->index('is_active', 'idx_purchaseable_items_active');

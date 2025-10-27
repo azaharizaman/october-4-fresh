@@ -1,6 +1,8 @@
-v1.0.1: 
-    - First version of Registrar
+v1.0.1: First version of Registrar
+v1.0.2:
+    - 'Initial Migration with document tracking'
     - create_document_types_table.php
     - create_document_registries_table.php  
     - create_document_audit_trails_table.php
     - seed_document_types_table.php
+

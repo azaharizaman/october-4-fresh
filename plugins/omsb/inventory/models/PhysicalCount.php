@@ -2,6 +2,7 @@
 
 use Model;
 use BackendAuth;
+use Omsb\Registrar\Traits\HasControlledDocumentNumber;
 use Carbon\Carbon;
 use ValidationException;
 
@@ -18,16 +19,30 @@ class PhysicalCount extends Model
 {
     use \October\Rain\Database\Traits\Validation;
     use \October\Rain\Database\Traits\SoftDelete;
+    use HasControlledDocumentNumber;
 
+    /**
+     * @var string table name
+     */
     public $table = 'omsb_inventory_physical_counts';
 
+    /**
+     * @var string document type code for registrar
+     */
+    protected string $documentTypeCode = 'PCNT';
+
+    /**
+     * @var array statuses that lock the document
+     */
+    protected array $protectedStatuses = ['completed', 'variance_review'];
+
     protected $fillable = [
-        'count_number', 'warehouse_id', 'count_date', 'count_type',
+        'count_number', 'document_number', 'registry_id', 'warehouse_id', 'count_date', 'count_type',
         'cut_off_time', 'total_items_counted', 'variance_count',
         'notes', 'status', 'initiated_by', 'supervisor'
     ];
 
-    protected $nullable = ['cut_off_time', 'notes', 'supervisor', 'created_by'];
+    protected $nullable = ['cut_off_time', 'notes', 'supervisor', 'created_by', 'registry_id', 'previous_status'];
 
     public $rules = [
         'count_number' => 'required|max:255|unique:omsb_inventory_physical_counts,count_number',

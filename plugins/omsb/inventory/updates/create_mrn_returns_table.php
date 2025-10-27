@@ -25,6 +25,7 @@ return new class extends Migration
             $table->string('return_reason'); // Return reason code/category
             $table->text('remarks')->nullable(); // Additional return notes
             $table->string('status', 20)->default('draft'); // draft, submitted, approved, rejected, completed
+            $table->string('previous_status', 50)->nullable(); // Track previous status for audit
             $table->decimal('total_amount', 15, 2)->default(0); // Total return value
             $table->timestamp('submitted_at')->nullable();
             $table->timestamp('approved_at')->nullable();
@@ -36,6 +37,12 @@ return new class extends Migration
             $table->foreignId('original_mrn_id')
                 ->constrained('omsb_inventory_mrns')
                 ->cascadeOnDelete();
+            
+            // Foreign key - Document Registry (for controlled document tracking)
+            $table->foreignId('registry_id')
+                ->nullable()
+                ->constrained('omsb_registrar_document_registries')
+                ->nullOnDelete();
                 
             // Foreign key - Return to Vendor (Supplier)
             $table->foreignId('vendor_id')

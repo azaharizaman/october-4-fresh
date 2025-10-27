@@ -25,6 +25,7 @@ return new class extends Migration
             $table->string('return_reason'); // Return reason code/category
             $table->text('remarks')->nullable(); // Additional return notes
             $table->string('status', 20)->default('draft'); // draft, submitted, approved, rejected, completed
+            $table->string('previous_status', 50)->nullable(); // Track previous status for audit
             $table->timestamp('submitted_at')->nullable();
             $table->timestamp('approved_at')->nullable();
             $table->timestamp('completed_at')->nullable();
@@ -35,6 +36,12 @@ return new class extends Migration
             $table->foreignId('original_mri_id')
                 ->constrained('omsb_inventory_mris')
                 ->cascadeOnDelete();
+            
+            // Foreign key - Document Registry (for controlled document tracking)
+            $table->foreignId('registry_id')
+                ->nullable()
+                ->constrained('omsb_registrar_document_registries')
+                ->nullOnDelete();
                 
             // Foreign key - Requesting Department/Person
             $table->foreignId('requestor_id')

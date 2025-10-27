@@ -53,11 +53,14 @@ return new class extends Migration
                 ->constrained('omsb_inventory_warehouses')
                 ->onDelete('cascade');
             
-            $table->unsignedInteger('received_by');
-            $table->foreign('received_by')->references('id')->on('omsb_organization_staff')->onDelete('cascade');
+            $table->foreignId('received_by')
+                ->constrained('omsb_organization_staff')
+                ->onDelete('cascade');
             
-            $table->unsignedInteger('inspected_by')->nullable();
-            $table->foreign('inspected_by')->references('id')->on('omsb_organization_staff')->nullOnDelete();
+            $table->foreignId('inspected_by')
+                ->nullable()
+                ->constrained('omsb_organization_staff')
+                ->nullOnDelete();
             
             $table->unsignedInteger('created_by')->nullable();
             $table->foreign('created_by')->references('id')->on('backend_users')->nullOnDelete();

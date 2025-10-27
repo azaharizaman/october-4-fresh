@@ -31,17 +31,17 @@ return new class extends Migration
             
             // Foreign key - Stock Adjustment header
             $table->foreignId('stock_adjustment_id')
-                ->constrained('omsb_inventory_stock_adjustments')
+                ->constrained('omsb_inventory_stock_adjustments', 'id', 'fk_sa_items_sa')
                 ->cascadeOnDelete();
                 
             // Foreign key - Warehouse Item (SKU)
             $table->foreignId('warehouse_item_id')
-                ->constrained('omsb_inventory_warehouse_items')
+                ->constrained('omsb_inventory_warehouse_items', 'id', 'fk_sa_items_wh_item')
                 ->restrictOnDelete();
                 
             // Foreign key - Adjustment UOM
             $table->foreignId('adjustment_uom_id')
-                ->constrained('omsb_inventory_unit_of_measures')
+                ->constrained('omsb_inventory_unit_of_measures', 'id', 'fk_sa_items_adj_uom')
                 ->restrictOnDelete();
             
             // Quantities in different UOMs for conversion tracking

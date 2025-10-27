@@ -36,9 +36,18 @@ class CreateDocumentAuditTrailsTable extends Migration
             $table->timestamps();
             
             // Foreign keys
-            $table->foreign('document_registry_id')->references('id')->on('omsb_registrar_document_registries')->cascadeOnDelete();
-            $table->foreign('document_type_code')->references('code')->on('omsb_registrar_document_types')->nullOnDelete();
-            $table->foreign('performed_by')->references('id')->on('backend_users')->nullOnDelete();
+            $table->foreign('document_registry_id', 'fk_audit_registry')
+                ->references('id')
+                ->on('omsb_registrar_document_registries')
+                ->cascadeOnDelete();
+            $table->foreign('document_type_code', 'fk_audit_doc_type')
+                ->references('code')
+                ->on('omsb_registrar_document_types')
+                ->nullOnDelete();
+            $table->foreign('performed_by', 'fk_audit_user')
+                ->references('id')
+                ->on('backend_users')
+                ->nullOnDelete();
             
             // Indexes for audit queries and compliance reporting
             $table->index(['document_registry_id', 'performed_at'], 'document_timeline');

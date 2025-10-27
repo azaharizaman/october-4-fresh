@@ -21,6 +21,7 @@ return new class extends Migration
             
             $table->id();
             $table->string('mri_number')->unique(); // Document number from Registrar
+            $table->string('document_number', 120)->nullable(); // Controlled document number
             $table->date('issue_date');
             $table->date('requested_date')->nullable(); // When initially requested
             $table->string('issue_purpose'); // maintenance, operation, project, etc.
@@ -29,6 +30,7 @@ return new class extends Migration
             $table->text('remarks')->nullable();
             $table->decimal('total_issue_value', 15, 2)->default(0); // Total value of goods issued
             $table->string('status', 20)->default('draft'); // draft, submitted, approved, completed
+            $table->string('previous_status', 50)->nullable(); // Track previous status for audit
             $table->timestamps();
             $table->softDeletes();
             
@@ -36,6 +38,12 @@ return new class extends Migration
             $table->foreignId('warehouse_id')
                 ->constrained('omsb_inventory_warehouses')
                 ->restrictOnDelete();
+            
+            // Foreign key - Document Registry (for controlled document tracking)
+            $table->foreignId('registry_id')
+                ->nullable()
+                ->constrained('omsb_registrar_document_registries')
+                ->nullOnDelete();
                 
             // Foreign key - Requested by staff
             // NOTE: This FK references Organization plugin - needs to be created there first
@@ -67,6 +75,7 @@ return new class extends Migration
             
             // Indexes
             $table->index('mri_number', 'idx_mri_number');
+            $table->index('document_number', 'idx_mri_document_number');
             $table->index('issue_date', 'idx_mri_issue_date');
             $table->index('status', 'idx_mri_status');
             $table->index('issue_purpose', 'idx_mri_purpose');

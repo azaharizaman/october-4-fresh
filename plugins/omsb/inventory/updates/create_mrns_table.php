@@ -21,6 +21,7 @@ return new class extends Migration
             
             $table->id();
             $table->string('mrn_number')->unique(); // Document number from Registrar
+            $table->string('document_number', 120)->nullable(); // Controlled document number
             $table->date('received_date');
             $table->string('delivery_note_number')->nullable(); // Vendor's delivery note
             $table->string('vehicle_number')->nullable();
@@ -29,6 +30,7 @@ return new class extends Migration
             $table->text('remarks')->nullable();
             $table->decimal('total_received_value', 15, 2)->default(0); // Total value of goods received
             $table->string('status', 20)->default('draft'); // draft, submitted, approved, completed
+            $table->string('previous_status', 50)->nullable(); // Track previous status for audit
             $table->timestamps();
             $table->softDeletes();
             
@@ -36,6 +38,12 @@ return new class extends Migration
             $table->foreignId('warehouse_id')
                 ->constrained('omsb_inventory_warehouses')
                 ->restrictOnDelete();
+            
+            // Foreign key - Document Registry (for controlled document tracking)
+            $table->foreignId('registry_id')
+                ->nullable()
+                ->constrained('omsb_registrar_document_registries')
+                ->nullOnDelete();
                 
             // Foreign key - Source document (typically Goods Receipt Note from Procurement)
             // NOTE: This FK references Procurement plugin - needs to be created there first
@@ -62,6 +70,7 @@ return new class extends Migration
             
             // Indexes
             $table->index('mrn_number', 'idx_mrn_number');
+            $table->index('document_number', 'idx_mrn_document_number');
             $table->index('received_date', 'idx_mrn_received_date');
             $table->index('status', 'idx_mrn_status');
             $table->index('deleted_at', 'idx_mrn_deleted_at');

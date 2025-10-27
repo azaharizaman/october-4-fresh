@@ -33,22 +33,22 @@ return new class extends Migration
             
             // Foreign key - Stock Transfer header
             $table->foreignId('stock_transfer_id')
-                ->constrained('omsb_inventory_stock_transfers')
+                ->constrained('omsb_inventory_stock_transfers', 'id', 'fk_st_items_st')
                 ->cascadeOnDelete();
                 
             // Foreign key - Source Warehouse Item (from warehouse)
             $table->foreignId('from_warehouse_item_id')
-                ->constrained('omsb_inventory_warehouse_items')
+                ->constrained('omsb_inventory_warehouse_items', 'id', 'fk_st_items_from_wh')
                 ->restrictOnDelete();
                 
             // Foreign key - Purchaseable Item (for destination warehouse item creation)
             $table->foreignId('purchaseable_item_id')
-                ->constrained('omsb_procurement_purchaseable_items')
+                ->constrained('omsb_procurement_purchaseable_items', 'id', 'fk_st_items_purchaseable')
                 ->restrictOnDelete();
                 
             // Foreign key - Transfer UOM
             $table->foreignId('transfer_uom_id')
-                ->constrained('omsb_inventory_unit_of_measures')
+                ->constrained('omsb_inventory_unit_of_measures', 'id', 'fk_st_items_xfer_uom')
                 ->restrictOnDelete();
             
             // Quantities in different UOMs for conversion tracking

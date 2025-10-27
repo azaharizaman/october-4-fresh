@@ -2,6 +2,7 @@
 
 use Model;
 use BackendAuth;
+use Omsb\Registrar\Traits\HasControlledDocumentNumber;
 use Carbon\Carbon;
 use ValidationException;
 
@@ -38,6 +39,7 @@ class Mri extends Model
 {
     use \October\Rain\Database\Traits\Validation;
     use \October\Rain\Database\Traits\SoftDelete;
+    use HasControlledDocumentNumber;
 
     /**
      * @var string table name
@@ -45,10 +47,22 @@ class Mri extends Model
     public $table = 'omsb_inventory_mris';
 
     /**
+     * @var string document type code for registrar
+     */
+    protected string $documentTypeCode = 'MRI';
+
+    /**
+     * @var array statuses that lock the document
+     */
+    protected array $protectedStatuses = ['approved', 'completed'];
+
+    /**
      * @var array fillable fields
      */
     protected $fillable = [
         'mri_number',
+        'document_number',
+        'registry_id',
         'warehouse_id',
         'requested_by',
         'issued_by',
@@ -75,7 +89,9 @@ class Mri extends Model
         'cost_center',
         'project_code',
         'remarks',
-        'created_by'
+        'created_by',
+        'registry_id',
+        'previous_status'
     ];
 
     /**

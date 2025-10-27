@@ -21,6 +21,7 @@ return new class extends Migration
             
             $table->id();
             $table->string('count_number')->unique(); // Document number from Registrar
+            $table->string('document_number', 120)->nullable(); // Controlled document number
             $table->date('count_date');
             $table->string('count_type', 20); // full, cycle, spot
             $table->timestamp('cut_off_time')->nullable(); // System snapshot time
@@ -28,6 +29,7 @@ return new class extends Migration
             $table->integer('variance_count')->default(0); // Items with variances
             $table->text('notes')->nullable();
             $table->string('status', 20)->default('scheduled'); // scheduled, in_progress, completed, variance_review
+            $table->string('previous_status', 50)->nullable(); // Track previous status for audit
             $table->timestamps();
             $table->softDeletes();
             
@@ -35,6 +37,12 @@ return new class extends Migration
             $table->foreignId('warehouse_id')
                 ->constrained('omsb_inventory_warehouses')
                 ->restrictOnDelete();
+            
+            // Foreign key - Document Registry (for controlled document tracking)
+            $table->foreignId('registry_id')
+                ->nullable()
+                ->constrained('omsb_registrar_document_registries')
+                ->nullOnDelete();
                 
             // Foreign key - Initiated by staff
             $table->foreignId('initiated_by')
@@ -53,6 +61,7 @@ return new class extends Migration
             
             // Indexes
             $table->index('count_number', 'idx_physical_count_number');
+            $table->index('document_number', 'idx_physical_count_document_number');
             $table->index('count_date', 'idx_physical_count_date');
             $table->index('count_type', 'idx_physical_count_type');
             $table->index('status', 'idx_physical_count_status');

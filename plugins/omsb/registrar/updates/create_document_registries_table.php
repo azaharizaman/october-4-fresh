@@ -23,7 +23,7 @@ class CreateDocumentRegistriesTable extends Migration
             $table->string('full_document_number')->unique()->comment('Complete formatted document number');
             
             // Location and temporal data
-            $table->unsignedInteger('site_id')->nullable()->comment('Site where document was created');
+            $table->unsignedBigInteger('site_id')->nullable()->comment('Site where document was created');
             $table->string('site_code', 10)->nullable()->comment('Site code used in numbering');
             $table->unsignedSmallInteger('year')->comment('Year component of document number');
             $table->unsignedTinyInteger('month')->nullable()->comment('Month component (if used)');
@@ -60,12 +60,30 @@ class CreateDocumentRegistriesTable extends Migration
             $table->softDeletes();
             
             // Foreign keys
-            $table->foreign('document_type_code')->references('code')->on('omsb_registrar_document_types')->restrictOnDelete();
-            $table->foreign('site_id')->references('id')->on('omsb_organization_sites')->nullOnDelete();
-            $table->foreign('created_by')->references('id')->on('backend_users')->nullOnDelete();
-            $table->foreign('updated_by')->references('id')->on('backend_users')->nullOnDelete();
-            $table->foreign('locked_by')->references('id')->on('backend_users')->nullOnDelete();
-            $table->foreign('voided_by')->references('id')->on('backend_users')->nullOnDelete();
+            $table->foreign('document_type_code', 'fk_registry_doc_type')
+                ->references('code')
+                ->on('omsb_registrar_document_types')
+                ->restrictOnDelete();
+            $table->foreign('site_id', 'fk_registry_site')
+                ->references('id')
+                ->on('omsb_organization_sites')
+                ->nullOnDelete();
+            $table->foreign('created_by', 'fk_registry_creator')
+                ->references('id')
+                ->on('backend_users')
+                ->nullOnDelete();
+            $table->foreign('updated_by', 'fk_registry_updater')
+                ->references('id')
+                ->on('backend_users')
+                ->nullOnDelete();
+            $table->foreign('locked_by', 'fk_registry_locker')
+                ->references('id')
+                ->on('backend_users')
+                ->nullOnDelete();
+            $table->foreign('voided_by', 'fk_registry_voider')
+                ->references('id')
+                ->on('backend_users')
+                ->nullOnDelete();
             
             // Critical indexes for performance and fraud detection
             $table->unique(['documentable_type', 'documentable_id'], 'unique_document_linkage');

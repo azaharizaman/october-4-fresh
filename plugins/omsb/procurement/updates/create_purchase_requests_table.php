@@ -58,14 +58,19 @@ return new class extends Migration
                 ->constrained('omsb_organization_sites')
                 ->onDelete('cascade');
             
-            $table->unsignedInteger('requested_by');
-            $table->foreign('requested_by')->references('id')->on('omsb_organization_staff')->onDelete('cascade');
+            $table->foreignId('requested_by')
+                ->constrained('omsb_organization_staff')
+                ->onDelete('cascade');
+            
+            // Service code for department/service assignment
+            $table->string('service_code', 10)->nullable();
             
             $table->unsignedInteger('created_by')->nullable();
             $table->foreign('created_by')->references('id')->on('backend_users')->nullOnDelete();
             
             // Indexes
             $table->index('document_number', 'idx_pr_document_number');
+            $table->index('service_code');
             $table->index('status', 'idx_pr_status');
             $table->index('request_date', 'idx_pr_request_date');
             $table->index('deleted_at', 'idx_pr_deleted_at');

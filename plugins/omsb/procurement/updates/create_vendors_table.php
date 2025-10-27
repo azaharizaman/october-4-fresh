@@ -35,7 +35,7 @@ return new class extends Migration
             $table->softDeletes();
             
             // Foreign keys
-            $table->unsignedInteger('address_id')->nullable();
+            $table->unsignedBigInteger('address_id')->nullable();
             $table->foreign('address_id')->references('id')->on('omsb_organization_addresses')->nullOnDelete();
             
             // Indexes

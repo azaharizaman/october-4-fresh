@@ -1,1 +1,30 @@
 v1.0.1: First version of Inventory
+v1.0.2:
+  - 'Initial Migration with controlled document support'
+  # - create_warehouses_table.php
+  - create_unit_of_measures_table.php
+  - create_warehouse_items_table.php
+  - create_warehouse_item_uoms_table.php
+  - create_uom_conversions_table.php
+  - create_mrns_table.php
+  - create_mrn_items_table.php
+  - create_mrn_returns_table.php
+  - create_mrn_return_items_table.php
+  - create_mris_table.php
+  - create_mri_items_table.php
+  - create_mri_returns_table.php
+  - create_mri_return_items_table.php
+  - create_stock_adjustments_table.php
+  - create_stock_adjustment_items_table.php
+  - create_stock_transfers_table.php
+  - create_stock_transfer_items_table.php
+  - create_physical_counts_table.php
+  - create_physical_count_items_table.php
+  - create_stock_reservations_table.php
+  - create_inventory_periods_table.php
+  - create_inventory_ledgers_table.php
+  - create_inventory_valuations_table.php
+  - create_inventory_valuation_items_table.php
+  - create_serial_numbers_table.php
+  - create_lot_batches_table.php
+

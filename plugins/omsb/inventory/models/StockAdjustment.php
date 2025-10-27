@@ -2,6 +2,7 @@
 
 use Model;
 use BackendAuth;
+use Omsb\Registrar\Traits\HasControlledDocumentNumber;
 use Carbon\Carbon;
 use ValidationException;
 
@@ -33,6 +34,7 @@ class StockAdjustment extends Model
 {
     use \October\Rain\Database\Traits\Validation;
     use \October\Rain\Database\Traits\SoftDelete;
+    use HasControlledDocumentNumber;
 
     /**
      * @var string table name
@@ -40,10 +42,22 @@ class StockAdjustment extends Model
     public $table = 'omsb_inventory_stock_adjustments';
 
     /**
+     * @var string document type code for registrar
+     */
+    protected string $documentTypeCode = 'SADJ';
+
+    /**
+     * @var array statuses that lock the document
+     */
+    protected array $protectedStatuses = ['approved', 'completed'];
+
+    /**
      * @var array fillable fields
      */
     protected $fillable = [
         'adjustment_number',
+        'document_number',
+        'registry_id',
         'warehouse_id',
         'adjustment_date',
         'reason_code',
@@ -61,7 +75,9 @@ class StockAdjustment extends Model
         'reference_document',
         'notes',
         'approved_by',
-        'created_by'
+        'created_by',
+        'registry_id',
+        'previous_status'
     ];
 
     /**
