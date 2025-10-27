@@ -31,6 +31,22 @@ class BudgetAdjustment extends Model
 {
     use \October\Rain\Database\Traits\Validation;
     use \October\Rain\Database\Traits\SoftDelete;
+    use \Omsb\Registrar\Traits\HasFinancialDocumentProtection;
+
+    /**
+     * @var string Document type code for registrar
+     */
+    public $documentTypeCode = 'BUDGET_ADJUSTMENT';
+
+    /**
+     * @var array Statuses that prevent editing
+     */
+    public $protectedStatuses = ['approved', 'completed', 'cancelled', 'voided'];
+
+    /**
+     * @var array Statuses that prevent amount changes
+     */
+    public $amountProtectedStatuses = ['approved', 'completed'];
 
     /**
      * @var string table name
@@ -51,7 +67,13 @@ class BudgetAdjustment extends Model
         'notes',
         'created_by',
         'approved_by',
-        'approved_at'
+        'approved_at',
+        'registry_id',
+        'is_voided',
+        'voided_at',
+        'voided_by',
+        'void_reason',
+        'previous_status'
     ];
 
     /**
@@ -61,7 +83,12 @@ class BudgetAdjustment extends Model
         'notes',
         'created_by',
         'approved_by',
-        'approved_at'
+        'approved_at',
+        'registry_id',
+        'voided_at',
+        'voided_by',
+        'void_reason',
+        'previous_status'
     ];
 
     /**
@@ -96,6 +123,7 @@ class BudgetAdjustment extends Model
     protected $dates = [
         'adjustment_date',
         'approved_at',
+        'voided_at',
         'deleted_at'
     ];
 
@@ -103,7 +131,8 @@ class BudgetAdjustment extends Model
      * @var array Casts for attributes
      */
     protected $casts = [
-        'adjustment_amount' => 'decimal:2'
+        'adjustment_amount' => 'decimal:2',
+        'is_voided' => 'boolean'
     ];
 
     /**

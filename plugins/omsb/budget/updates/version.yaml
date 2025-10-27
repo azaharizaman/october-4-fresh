@@ -7,3 +7,6 @@ v1.0.3:
   - create_budget_transfers_table.php
   - create_budget_adjustments_table.php
   - create_budget_reallocations_table.php
+v1.0.4:
+  - 'Add controlled document fields for Registrar trait integration'
+  - add_controlled_document_fields_to_budget_transactions.php

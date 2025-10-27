@@ -78,61 +78,89 @@ The Budget model includes several calculated fields that are automatically compu
 
 All budget transaction models are **controlled documents** and require document numbers from the Registrar plugin.
 
+**Trait Integration:** All budget transaction models use the `HasFinancialDocumentProtection` trait from the Registrar plugin, which provides:
+- Automatic document number generation
+- Edit protection based on status
+- Complete audit trails via DocumentRegistry
+- Void handling instead of deletion
+- Enhanced financial document protection
+- Amount change tracking and validation
+- Multi-level approval support
+
+**Protected Statuses:** Documents in `approved`, `completed`, `cancelled`, or `voided` status cannot be edited.
+
+**Document Type Codes:**
+- BudgetTransfer: `BUDGET_TRANSFER`
+- BudgetAdjustment: `BUDGET_ADJUSTMENT`
+- BudgetReallocation: `BUDGET_REALLOCATION`
+
 #### 1. BudgetTransfer
 
 Manages intersite budget transfers (between different sites).
 
 **Properties:**
-- `document_number` - Unique document number from registrar
+- `document_number` - Unique document number from registrar (auto-generated)
+- `registry_id` - Links to DocumentRegistry for audit trail
 - `transfer_type` - Type: outward or inward
 - `transfer_date` - Transfer date
 - `amount` - Transfer amount
 - `from_budget_id` - Source budget
 - `to_budget_id` - Destination budget
 - `reason` - Transfer justification
-- `status` - Document status (draft, submitted, approved, rejected, cancelled, completed)
+- `status` - Document status (draft, submitted, approved, rejected, cancelled, completed, voided)
+- `is_voided`, `voided_at`, `voided_by`, `void_reason` - Voiding information
 
 **Business Rules:**
 - Must be between budgets at different sites (intersite)
 - Source and destination budgets cannot be the same
 - Validation enforces site difference
+- Cannot be deleted, must be voided instead
+- Amount cannot be changed after approval
 
 #### 2. BudgetAdjustment
 
 Manages budget amount modifications (increase or decrease).
 
 **Properties:**
-- `document_number` - Unique document number from registrar
+- `document_number` - Unique document number from registrar (auto-generated)
+- `registry_id` - Links to DocumentRegistry for audit trail
 - `adjustment_date` - Adjustment date
 - `adjustment_amount` - Adjustment amount (positive for increase, negative for decrease)
 - `adjustment_type` - Type: increase or decrease
 - `budget_id` - Affected budget
 - `reason` - Adjustment justification (required)
-- `status` - Document status
+- `status` - Document status (draft, submitted, approved, rejected, cancelled, completed, voided)
+- `is_voided`, `voided_at`, `voided_by`, `void_reason` - Voiding information
 
 **Business Rules:**
 - Amount is automatically normalized based on type:
   - Increase → positive amount
   - Decrease → negative amount
+- Cannot be deleted, must be voided instead
+- Amount cannot be changed after approval
 
 #### 3. BudgetReallocation
 
 Manages budget reallocations within the same site between different GL accounts.
 
 **Properties:**
-- `document_number` - Unique document number from registrar
+- `document_number` - Unique document number from registrar (auto-generated)
+- `registry_id` - Links to DocumentRegistry for audit trail
 - `reallocation_date` - Reallocation date
 - `amount` - Reallocation amount
 - `budget_id` - Affected budget
 - `from_gl_account_id` - Source GL account
 - `to_gl_account_id` - Destination GL account
 - `reason` - Reallocation justification (required)
-- `status` - Document status
+- `status` - Document status (draft, submitted, approved, rejected, cancelled, completed, voided)
+- `is_voided`, `voided_at`, `voided_by`, `void_reason` - Voiding information
 
 **Business Rules:**
 - Can only be within the same site (not intersite)
 - Both GL accounts must belong to the budget's site
 - Source and destination GL accounts must be different
+- Cannot be deleted, must be voided instead
+- Amount cannot be changed after approval
 - Validation enforces same-site requirement
 
 ## Integration Points

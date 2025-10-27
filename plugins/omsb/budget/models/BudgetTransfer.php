@@ -32,6 +32,22 @@ class BudgetTransfer extends Model
 {
     use \October\Rain\Database\Traits\Validation;
     use \October\Rain\Database\Traits\SoftDelete;
+    use \Omsb\Registrar\Traits\HasFinancialDocumentProtection;
+
+    /**
+     * @var string Document type code for registrar
+     */
+    public $documentTypeCode = 'BUDGET_TRANSFER';
+
+    /**
+     * @var array Statuses that prevent editing
+     */
+    public $protectedStatuses = ['approved', 'completed', 'cancelled', 'voided'];
+
+    /**
+     * @var array Statuses that prevent amount changes
+     */
+    public $amountProtectedStatuses = ['approved', 'completed'];
 
     /**
      * @var string table name
@@ -53,7 +69,13 @@ class BudgetTransfer extends Model
         'notes',
         'created_by',
         'approved_by',
-        'approved_at'
+        'approved_at',
+        'registry_id',
+        'is_voided',
+        'voided_at',
+        'voided_by',
+        'void_reason',
+        'previous_status'
     ];
 
     /**
@@ -64,7 +86,12 @@ class BudgetTransfer extends Model
         'notes',
         'created_by',
         'approved_by',
-        'approved_at'
+        'approved_at',
+        'registry_id',
+        'voided_at',
+        'voided_by',
+        'void_reason',
+        'previous_status'
     ];
 
     /**
@@ -101,6 +128,7 @@ class BudgetTransfer extends Model
     protected $dates = [
         'transfer_date',
         'approved_at',
+        'voided_at',
         'deleted_at'
     ];
 
@@ -108,7 +136,8 @@ class BudgetTransfer extends Model
      * @var array Casts for attributes
      */
     protected $casts = [
-        'amount' => 'decimal:2'
+        'amount' => 'decimal:2',
+        'is_voided' => 'boolean'
     ];
 
     /**
