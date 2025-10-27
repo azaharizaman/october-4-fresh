@@ -1,0 +1,86 @@
+# ===================================
+#  Form Field Definitions
+# ===================================
+
+fields:
+    document_number:
+        label: Document Number
+        type: text
+        placeholder: Will be auto-generated
+        span: left
+        required: true
+        comment: Document number from Registrar (controlled document)
+        
+    transfer_type:
+        label: Transfer Type
+        type: dropdown
+        options:
+            outward: Outward
+            inward: Inward
+        span: right
+        required: true
+        comment: Type of transfer
+        
+    from_budget:
+        label: From Budget
+        type: relation
+        nameFrom: display_name
+        emptyOption: -- Select Source Budget --
+        span: left
+        required: true
+        comment: Source budget (must be different site than destination)
+        
+    to_budget:
+        label: To Budget
+        type: relation
+        nameFrom: display_name
+        emptyOption: -- Select Destination Budget --
+        span: right
+        required: true
+        comment: Destination budget (must be different site than source)
+        
+    amount:
+        label: Transfer Amount
+        type: number
+        step: 0.01
+        placeholder: 0.00
+        span: left
+        required: true
+        comment: Amount to transfer
+        
+    transfer_date:
+        label: Transfer Date
+        type: datepicker
+        mode: date
+        span: right
+        required: true
+        comment: Date of transfer
+        
+    status:
+        label: Status
+        type: dropdown
+        options:
+            draft: Draft
+            submitted: Submitted
+            approved: Approved
+            rejected: Rejected
+            cancelled: Cancelled
+            completed: Completed
+        span: left
+        required: true
+        default: draft
+        comment: Current status
+        
+    reason:
+        label: Reason / Justification
+        type: textarea
+        size: small
+        span: full
+        comment: Reason for this budget transfer
+        
+    notes:
+        label: Notes
+        type: textarea
+        size: small
+        span: full
+        comment: Additional notes

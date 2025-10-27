@@ -1,0 +1,32 @@
+# ===================================
+#  List Column Definitions
+# ===================================
+
+columns:
+    document_number:
+        label: Document Number
+        searchable: true
+        sortable: true
+        
+    from_gl_account:
+        label: From GL Account
+        relation: from_gl_account
+        select: account_code
+        
+    to_gl_account:
+        label: To GL Account
+        relation: to_gl_account
+        select: account_code
+        
+    amount:
+        label: Amount
+        type: number
+        align: right
+        
+    status:
+        label: Status
+        searchable: true
+        
+    reallocation_date:
+        label: Reallocation Date
+        type: date

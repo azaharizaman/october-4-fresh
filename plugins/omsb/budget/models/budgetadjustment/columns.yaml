@@ -1,0 +1,26 @@
+# ===================================
+#  List Column Definitions
+# ===================================
+
+columns:
+    document_number:
+        label: Document Number
+        searchable: true
+        sortable: true
+        
+    adjustment_type:
+        label: Type
+        searchable: true
+        
+    adjustment_amount:
+        label: Amount
+        type: number
+        align: right
+        
+    status:
+        label: Status
+        searchable: true
+        
+    adjustment_date:
+        label: Adjustment Date
+        type: date

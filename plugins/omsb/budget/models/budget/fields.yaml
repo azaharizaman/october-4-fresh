@@ -1,0 +1,257 @@
+# ===================================
+#  Form Field Definitions
+# ===================================
+
+fields:
+    id:
+        label: ID
+        disabled: true
+        span: left
+        
+    budget_code:
+        label: Budget Code
+        type: text
+        placeholder: e.g., BGT/SGH/FEMS/MTC/5080190/25
+        span: right
+        required: true
+        comment: Free input field - example format: BGT/SGH/FEMS/MTC/5080190/25
+        
+    description:
+        label: Description
+        type: textarea
+        size: small
+        placeholder: e.g., SGH-MAINTENANCE COSTS-Mech - Fire protection system-FEMS
+        span: full
+        required: true
+        comment: Budget description with details about the allocation
+        
+    year:
+        label: Budget Year
+        type: number
+        placeholder: e.g., 2025
+        span: left
+        required: true
+        comment: Year this budget is allocated for
+        
+    status:
+        label: Status
+        type: dropdown
+        options:
+            draft: Draft
+            approved: Approved
+            active: Active
+            expired: Expired
+            cancelled: Cancelled
+        span: right
+        required: true
+        default: draft
+        comment: Current status of the budget
+        
+    site:
+        label: Site
+        type: relation
+        nameFrom: display_name
+        emptyOption: -- Select Site --
+        span: left
+        required: true
+        comment: Site this budget belongs to
+        
+    gl_account:
+        label: GL Account
+        type: relation
+        nameFrom: display_name
+        emptyOption: -- Select GL Account --
+        span: right
+        required: true
+        comment: GL Account this budget is associated with
+        
+    service_code:
+        label: Service Code
+        type: dropdown
+        emptyOption: -- No Service --
+        span: left
+        comment: Optional service department code (e.g., FEMS)
+        
+    allocated_amount:
+        label: Allocated Amount
+        type: number
+        step: 0.01
+        placeholder: 0.00
+        span: right
+        required: true
+        comment: Initial budget allocation amount
+        
+    effective_from:
+        label: Effective From
+        type: datepicker
+        mode: date
+        span: left
+        required: true
+        comment: Budget effective start date
+        
+    effective_to:
+        label: Effective To
+        type: datepicker
+        mode: date
+        span: right
+        required: true
+        comment: Budget effective end date
+        
+    notes:
+        label: Notes
+        type: textarea
+        size: small
+        span: full
+        comment: Additional notes or comments about this budget
+
+secondaryTabs:
+    fields:
+        # Calculated Fields Tab
+        _calculated_section:
+            type: section
+            label: Budget Summary
+            tab: Budget Details
+            
+        _allocated:
+            label: Allocated Amount
+            type: number
+            disabled: true
+            span: left
+            tab: Budget Details
+            default: 0.00
+            comment: Initial allocated amount
+            
+        _transferred_in:
+            label: Total Transferred In
+            type: number
+            disabled: true
+            span: right
+            tab: Budget Details
+            default: 0.00
+            comment: Total amount transferred in from other budgets
+            
+        _transferred_out:
+            label: Total Transferred Out
+            type: number
+            disabled: true
+            span: left
+            tab: Budget Details
+            default: 0.00
+            comment: Total amount transferred out to other budgets
+            
+        _adjustments:
+            label: Total Adjustments
+            type: number
+            disabled: true
+            span: right
+            tab: Budget Details
+            default: 0.00
+            comment: Total adjustments (increase/decrease)
+            
+        _reallocations:
+            label: Total Reallocations
+            type: number
+            disabled: true
+            span: left
+            tab: Budget Details
+            default: 0.00
+            comment: Total reallocations within same site
+            
+        _current_budget:
+            label: Current Budget
+            type: number
+            disabled: true
+            span: right
+            tab: Budget Details
+            default: 0.00
+            comment: Current budget after all transactions
+            
+        _utilized:
+            label: Utilized Amount
+            type: number
+            disabled: true
+            span: left
+            tab: Budget Details
+            default: 0.00
+            comment: Total utilized from Purchase Orders
+            
+        _available:
+            label: Available Balance
+            type: number
+            disabled: true
+            span: right
+            tab: Budget Details
+            default: 0.00
+            comment: Available budget balance
+            
+        _utilization_pct:
+            label: Utilization %
+            type: number
+            disabled: true
+            span: left
+            tab: Budget Details
+            default: 0.00
+            comment: Percentage of budget utilized
+            
+        # Transactions Tabs
+        transfers_outward:
+            label: Outward Transfers
+            type: relation
+            tab: Outward Transfers
+            comment: Budget transfers out to other sites
+            
+        transfers_inward:
+            label: Inward Transfers
+            type: relation
+            tab: Inward Transfers
+            comment: Budget transfers in from other sites
+            
+        adjustments:
+            label: Budget Adjustments
+            type: relation
+            tab: Adjustments
+            comment: Budget amount adjustments (increase/decrease)
+            
+        reallocations:
+            label: Budget Reallocations
+            type: relation
+            tab: Reallocations
+            comment: Budget reallocations within same site
+            
+        # Approval Information
+        _approval_section:
+            type: section
+            label: Approval Information
+            tab: Audit Trail
+            
+        creator:
+            label: Created By
+            type: relation
+            nameFrom: full_name
+            disabled: true
+            span: left
+            tab: Audit Trail
+            
+        created_at:
+            label: Created At
+            type: datepicker
+            mode: datetime
+            disabled: true
+            span: right
+            tab: Audit Trail
+            
+        approver:
+            label: Approved By
+            type: relation
+            nameFrom: full_name
+            disabled: true
+            span: left
+            tab: Audit Trail
+            
+        approved_at:
+            label: Approved At
+            type: datepicker
+            mode: datetime
+            disabled: true
+            span: right
+            tab: Audit Trail
