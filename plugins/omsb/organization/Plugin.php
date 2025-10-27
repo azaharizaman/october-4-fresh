@@ -46,9 +46,9 @@ class Plugin extends PluginBase
     {
         return []; // Remove this line to activate
 
-        return [
-            'Omsb\Organization\Components\MyComponent' => 'myComponent',
-        ];
+        // return [
+        //     'Omsb\Organization\Components\MyComponent' => 'myComponent',
+        // ];
     }
 
     /**

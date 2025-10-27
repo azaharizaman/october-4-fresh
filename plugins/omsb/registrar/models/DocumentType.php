@@ -156,11 +156,11 @@ class DocumentType extends Model
     }
 
     /**
-     * Check if document supports modifiers
+     * Check if this document type supports modifiers
      */
     public function hasModifierSupport()
     {
-        return $this->supports_modifiers && !empty($this->modifier_options);
+        return $this->supports_modifiers && !empty($this->modifier_options) && is_array($this->modifier_options);
     }
 
     /**
@@ -172,7 +172,7 @@ class DocumentType extends Model
             return [];
         }
 
-        return $this->modifier_options ?: [];
+        return is_array($this->modifier_options) ? $this->modifier_options : [];
     }
 
     /**
@@ -208,9 +208,12 @@ class DocumentType extends Model
         $pattern = str_replace('{######}', $number, $pattern);
 
         // Add modifier example if supported
-        if ($this->hasModifierSupport() && !empty($this->modifier_options)) {
-            $firstModifier = array_keys($this->modifier_options)[0];
-            $pattern .= $this->modifier_separator . '(' . $firstModifier . ')';
+        if ($this->hasModifierSupport() && !empty($this->modifier_options) && is_array($this->modifier_options)) {
+            $modifierOptions = is_array($this->modifier_options) ? $this->modifier_options : [];
+            if (!empty($modifierOptions)) {
+                $firstModifier = array_keys($modifierOptions)[0];
+                $pattern .= $this->modifier_separator . '(' . $firstModifier . ')';
+            }
         }
 
         return $pattern;

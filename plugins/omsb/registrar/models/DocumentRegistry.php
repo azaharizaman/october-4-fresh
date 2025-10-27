@@ -25,7 +25,7 @@ class DocumentRegistry extends Model
     /**
      * @var array dates attributes that should be mutated to dates
      */
-    protected $dates = ['deleted_at', 'locked_at', 'voided_at'];
+    protected $dates = ['deleted_at', 'locked_at', 'voided_at', 'created_at', 'updated_at'];
 
     /**
      * @var array fillable attributes
@@ -248,8 +248,17 @@ class DocumentRegistry extends Model
         }
 
         // Check document type rules
-        if ($this->documentType && is_object($this->documentType)) {
-            return $this->documentType->allowsEditingAtStatus($this->status);
+        try {
+            $documentType = $this->documentType;
+            if ($documentType && is_object($documentType) && method_exists($documentType, 'allowsEditingAtStatus')) {
+                return $documentType->allowsEditingAtStatus($this->status);
+            }
+        } catch (\Exception $e) {
+            // If relationship fails to load, default to allow editing
+            \Log::warning('DocumentRegistry: Failed to load documentType relationship', [
+                'registry_id' => $this->id,
+                'error' => $e->getMessage()
+            ]);
         }
 
         return true;
@@ -373,11 +382,21 @@ class DocumentRegistry extends Model
      */
     public function getAgeInDays()
     {
-        if (!$this->created_at || !is_object($this->created_at)) {
+        if (!$this->created_at) {
             return 0;
         }
         
-        return $this->created_at->diffInDays(now());
+        // Ensure created_at is a Carbon instance
+        $createdAt = $this->created_at;
+        if (is_string($createdAt)) {
+            $createdAt = \Carbon\Carbon::parse($createdAt);
+        }
+        
+        if (!$createdAt instanceof \Carbon\Carbon) {
+            return 0;
+        }
+        
+        return $createdAt->diffInDays(now());
     }
 
     /**
@@ -393,11 +412,41 @@ class DocumentRegistry extends Model
      */
     public function getAuditSummary()
     {
+        // Safely get document type name
+        $documentTypeName = 'Unknown';
+        try {
+            $documentType = $this->documentType;
+            if ($documentType && is_object($documentType) && isset($documentType->name)) {
+                $documentTypeName = $documentType->name;
+            }
+        } catch (\Exception $e) {
+            \Log::warning('DocumentRegistry: Failed to load documentType for audit summary', [
+                'registry_id' => $this->id,
+                'error' => $e->getMessage()
+            ]);
+        }
+
+        // Safely get creator name
+        $creatorName = 'Unknown';
+        try {
+            $creator = $this->creator;
+            if ($creator && is_object($creator) && isset($creator->full_name)) {
+                $creatorName = $creator->full_name;
+            } elseif ($creator && is_object($creator) && isset($creator->first_name) && isset($creator->last_name)) {
+                $creatorName = trim($creator->first_name . ' ' . $creator->last_name);
+            }
+        } catch (\Exception $e) {
+            \Log::warning('DocumentRegistry: Failed to load creator for audit summary', [
+                'registry_id' => $this->id,
+                'error' => $e->getMessage()
+            ]);
+        }
+
         return [
             'document_number' => $this->full_document_number,
-            'document_type' => $this->documentType && is_object($this->documentType) ? $this->documentType->name : 'Unknown',
+            'document_type' => $documentTypeName,
             'status' => $this->status,
-            'created_by' => $this->creator && is_object($this->creator) ? $this->creator->full_name : 'Unknown',
+            'created_by' => $creatorName,
             'created_at' => $this->created_at,
             'current_state' => [
                 'is_locked' => $this->is_locked,
