@@ -13,3 +13,9 @@ v1.0.1:
     - create_goods_receipt_note_items_table.php
     - create_delivery_orders_table.php
     - create_delivery_order_items_table.php
+v1.0.2:
+    - 'Add service code to purchaseable items'
+    - add_service_code_to_purchaseable_items_table.php
+v1.0.3:
+    - 'Add service code to purchase requests'
+    - add_service_code_to_purchase_requests_table.php

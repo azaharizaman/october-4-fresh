@@ -9,3 +9,9 @@ v1.0.2:
 v1.0.3:
   - 'Add GL Accounts table'
   - create_gl_accounts_table.php
+v1.0.4:
+  - 'Add Service Department settings'
+  - create_service_settings_table.php
+v1.0.5:
+  - 'Add service code to staff table'
+  - add_service_code_to_staff_table.php

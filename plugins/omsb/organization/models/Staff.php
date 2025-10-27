@@ -30,7 +30,8 @@ class Staff extends Model
         'contact_no',
         'user_id',
         'site_id',
-        'company_id'
+        'company_id',
+        'service_code'
     ];
 
     /**
@@ -39,7 +40,8 @@ class Staff extends Model
     protected $nullable = [
         'user_id',
         'site_id',
-        'company_id'
+        'company_id',
+        'service_code'
     ];
 
     /**
@@ -53,4 +55,58 @@ class Staff extends Model
     protected $dates = [
         'deleted_at'
     ];
+
+    /**
+     * Get service details for this staff
+     */
+    public function getServiceAttribute()
+    {
+        return ServiceSettings::getServiceByCode($this->service_code);
+    }
+
+    /**
+     * Get service name
+     */
+    public function getServiceNameAttribute()
+    {
+        return ServiceSettings::getServiceName($this->service_code);
+    }
+
+    /**
+     * Get service color
+     */
+    public function getServiceColorAttribute()
+    {
+        return ServiceSettings::getServiceColor($this->service_code);
+    }
+
+    /**
+     * Check if staff belongs to specific service
+     */
+    public function belongsToService($serviceCode)
+    {
+        return $this->service_code === $serviceCode;
+    }
+
+    /**
+     * Scope: Filter by service
+     */
+    public function scopeByService($query, $serviceCode)
+    {
+        return $query->where('service_code', $serviceCode);
+    }
+
+    /**
+     * Get staff in same service
+     */
+    public function getSameServiceStaff()
+    {
+        if (!$this->service_code) {
+            return collect();
+        }
+
+        return self::byService($this->service_code)
+            ->where('id', '!=', $this->id)
+            ->get();
+    }
 }

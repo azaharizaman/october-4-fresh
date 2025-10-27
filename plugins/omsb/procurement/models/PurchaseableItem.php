@@ -71,7 +71,8 @@ class PurchaseableItem extends Model
         'minimum_order_quantity',
         'item_category_id',
         'gl_account_id',
-        'preferred_vendor_id'
+        'preferred_vendor_id',
+        'service_code'
     ];
 
     /**
@@ -90,7 +91,8 @@ class PurchaseableItem extends Model
         'item_category_id',
         'gl_account_id',
         'preferred_vendor_id',
-        'created_by'
+        'created_by',
+        'service_code'
     ];
 
     /**
@@ -102,6 +104,7 @@ class PurchaseableItem extends Model
         'unit_of_measure' => 'required|max:255',
         'is_inventory_item' => 'required|boolean',
         'item_type' => 'required|in:consumable,equipment,spare_part,asset,service,other',
+        'service_code' => 'nullable|max:10',
         'is_active' => 'boolean',
         'is_discontinued' => 'boolean',
         'standard_cost' => 'nullable|numeric|min:0',
@@ -362,5 +365,68 @@ class PurchaseableItem extends Model
             ->orderBy('name')
             ->pluck('display_name', 'id')
             ->toArray();
+    }
+
+    /**
+     * Get service details for this item
+     */
+    public function getServiceAttribute()
+    {
+        return \Omsb\Organization\Models\ServiceSettings::getServiceByCode($this->service_code);
+    }
+
+    /**
+     * Get service name
+     */
+    public function getServiceNameAttribute()
+    {
+        return \Omsb\Organization\Models\ServiceSettings::getServiceName($this->service_code);
+    }
+
+    /**
+     * Get service color
+     */
+    public function getServiceColorAttribute()
+    {
+        return \Omsb\Organization\Models\ServiceSettings::getServiceColor($this->service_code);
+    }
+
+    /**
+     * Get service code options for dropdown
+     */
+    public function getServiceCodeOptions(): array
+    {
+        return \Omsb\Organization\Models\ServiceSettings::getServiceDropdownOptions();
+    }
+
+    /**
+     * Scope: Filter by service
+     */
+    public function scopeByService($query, $serviceCode)
+    {
+        return $query->where('service_code', $serviceCode);
+    }
+
+    /**
+     * Check if item belongs to specific service
+     */
+    public function belongsToService($serviceCode)
+    {
+        return $this->service_code === $serviceCode;
+    }
+
+    /**
+     * Get items in same service
+     */
+    public function getSameServiceItems()
+    {
+        if (!$this->service_code) {
+            return collect();
+        }
+
+        return self::byService($this->service_code)
+            ->where('id', '!=', $this->id)
+            ->active()
+            ->get();
     }
 }

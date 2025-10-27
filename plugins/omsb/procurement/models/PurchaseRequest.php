@@ -52,6 +52,7 @@ class PurchaseRequest extends Model
         'total_amount',
         'site_id',
         'requested_by',
+        'service_code',
         'submitted_by',
         'submitted_at',
         'reviewed_by',
@@ -67,6 +68,7 @@ class PurchaseRequest extends Model
     protected $nullable = [
         'justification',
         'notes',
+        'service_code',
         'submitted_by',
         'submitted_at',
         'reviewed_by',
@@ -87,6 +89,7 @@ class PurchaseRequest extends Model
         'priority' => 'required|in:low,normal,high,urgent',
         'status' => 'required|in:draft,submitted,reviewed,approved,rejected,cancelled,completed',
         'purpose' => 'required|max:255',
+        'service_code' => 'nullable|max:10',
         'total_amount' => 'required|numeric|min:0',
         'site_id' => 'required|integer|exists:omsb_organization_sites,id',
         'requested_by' => 'required|integer|exists:omsb_organization_staff,id'
@@ -316,5 +319,69 @@ class PurchaseRequest extends Model
             ->get()
             ->pluck('full_name', 'id')
             ->toArray();
+    }
+
+    /**
+     * Get service details for this purchase request
+     */
+    public function getServiceAttribute()
+    {
+        return \Omsb\Organization\Models\ServiceSettings::getServiceByCode($this->service_code);
+    }
+
+    /**
+     * Get service name
+     */
+    public function getServiceNameAttribute()
+    {
+        return \Omsb\Organization\Models\ServiceSettings::getServiceName($this->service_code);
+    }
+
+    /**
+     * Get service color
+     */
+    public function getServiceColorAttribute()
+    {
+        return \Omsb\Organization\Models\ServiceSettings::getServiceColor($this->service_code);
+    }
+
+    /**
+     * Get service code options for dropdown
+     */
+    public function getServiceCodeOptions(): array
+    {
+        return \Omsb\Organization\Models\ServiceSettings::getServiceDropdownOptions();
+    }
+
+    /**
+     * Scope: Filter by service
+     */
+    public function scopeByService($query, $serviceCode)
+    {
+        return $query->where('service_code', $serviceCode);
+    }
+
+    /**
+     * Check if request belongs to specific service
+     */
+    public function belongsToService($serviceCode)
+    {
+        return $this->service_code === $serviceCode;
+    }
+
+    /**
+     * Get approval threshold for this request's service
+     */
+    public function getServiceApprovalThreshold()
+    {
+        return \Omsb\Organization\Models\ServiceSettings::getApprovalThreshold($this->service_code);
+    }
+
+    /**
+     * Check if this request requires special approval due to amount/service combination
+     */
+    public function requiresSpecialApproval()
+    {
+        return \Omsb\Organization\Models\ServiceSettings::requiresSpecialApproval($this->service_code, $this->total_amount);
     }
 }
