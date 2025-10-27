@@ -278,6 +278,7 @@ class Budget extends Model
         // - PO is linked to this budget (via gl_account_id and site_id match)
         // - PO status is approved/completed
         // - PO effective dates overlap with budget effective dates
+        // - PO is NOT voided (exclude POs that are voided, as per HasFinancialDocumentProtection trait)
         return 0.0;
     }
 
