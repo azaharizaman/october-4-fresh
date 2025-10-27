@@ -294,7 +294,7 @@ class Budget extends Model
      */
     public function getUtilizationPercentageAttribute(): float
     {
-        if ($this->current_budget == 0) {
+        if ($this->current_budget === 0) {
             return 0.0;
         }
         
