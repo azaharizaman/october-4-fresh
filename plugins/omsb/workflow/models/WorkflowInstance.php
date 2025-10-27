@@ -1,32 +1,18 @@
 <?php namespace Omsb\Workflow\Models;
 
 use Model;
-use BackendAuth;
 
 /**
  * WorkflowInstance Model
  * 
- * Tracks individual document workflow transitions (audit trail)
+ * Manages ongoing approval workflow instances.
  *
- * @property int $id
- * @property string $workflowable_type Polymorphic document type
- * @property int $workflowable_id Polymorphic document ID
- * @property string $action Action performed (submit, approve, reject, cancel, etc.)
- * @property string|null $comments User comments
- * @property \Carbon\Carbon $transitioned_at Transition timestamp
- * @property int $workflow_definition_id Parent workflow
- * @property int|null $from_status_id Previous status
- * @property int $to_status_id New status
- * @property int|null $transition_id Transition used
- * @property int $performed_by User who performed the action
- * @property \Carbon\Carbon $created_at
- * @property \Carbon\Carbon $updated_at
- * 
  * @link https://docs.octobercms.com/4.x/extend/system/models.html
  */
 class WorkflowInstance extends Model
 {
     use \October\Rain\Database\Traits\Validation;
+    use \October\Rain\Database\Traits\SoftDelete;
 
     /**
      * @var string table name
@@ -37,154 +23,171 @@ class WorkflowInstance extends Model
      * @var array fillable fields
      */
     protected $fillable = [
-        'workflowable_type',
-        'workflowable_id',
-        'action',
-        'comments',
-        'transitioned_at',
-        'workflow_definition_id',
-        'from_status_id',
-        'to_status_id',
-        'transition_id',
-        'performed_by'
-    ];
-
-    /**
-     * @var array attributes that should be converted to null when empty
-     */
-    protected $nullable = [
-        'comments',
-        'from_status_id',
-        'transition_id'
+        'workflow_code',
+        'status',
+        'document_type',
+        'document_amount',
+        'current_step',
+        'total_steps_required',
+        'steps_completed',
+        'approval_path',
+        'started_at',
+        'completed_at',
+        'due_at',
+        'is_overdue',
+        'current_approval_type',
+        'approvals_required',
+        'approvals_received',
+        'rejections_received',
+        'is_escalated',
+        'escalated_at',
+        'escalation_reason',
+        'workflow_notes',
+        'metadata'
     ];
 
     /**
      * @var array rules for validation
      */
     public $rules = [
-        'workflowable_type' => 'required|max:255',
-        'workflowable_id' => 'required|integer',
-        'action' => 'required|max:255',
-        'transitioned_at' => 'required|date',
-        'workflow_definition_id' => 'required|integer|exists:omsb_workflow_definitions,id',
-        'from_status_id' => 'nullable|integer|exists:omsb_workflow_statuses,id',
-        'to_status_id' => 'required|integer|exists:omsb_workflow_statuses,id',
-        'transition_id' => 'nullable|integer|exists:omsb_workflow_transitions,id',
-        'performed_by' => 'required|integer|exists:backend_users,id'
+        'workflow_code' => 'required|unique:omsb_workflow_instances,workflow_code',
+        'status' => 'required|in:pending,in_progress,completed,failed,cancelled',
+        'document_type' => 'required|string',
+        'current_approval_type' => 'in:single,quorum,majority,unanimous',
+        'approvals_required' => 'required|integer|min:1',
+        'total_steps_required' => 'required|integer|min:1',
+        'steps_completed' => 'integer|min:0'
     ];
 
     /**
-     * @var array dates used by the model
+     * @var array dates
      */
     protected $dates = [
-        'transitioned_at'
+        'started_at',
+        'completed_at',
+        'due_at',
+        'escalated_at',
+        'deleted_at'
     ];
 
     /**
-     * @var array Relations
+     * @var array casts
+     */
+    protected $casts = [
+        'is_overdue' => 'boolean',
+        'is_escalated' => 'boolean',
+        'approval_path' => 'array',
+        'metadata' => 'array',
+        'document_amount' => 'decimal:2'
+    ];
+
+    /**
+     * @var array belongsTo relationships
      */
     public $belongsTo = [
-        'workflow_definition' => [
-            WorkflowDefinition::class
-        ],
-        'from_status' => [
-            WorkflowStatus::class,
-            'key' => 'from_status_id'
-        ],
-        'to_status' => [
-            WorkflowStatus::class,
-            'key' => 'to_status_id'
-        ],
-        'transition' => [
-            WorkflowTransition::class
-        ],
-        'performer' => [
-            \Backend\Models\User::class,
-            'key' => 'performed_by'
-        ]
-    ];
-
-    public $morphTo = [
-        'workflowable' => []
+        'current_approval_rule' => [\Omsb\Organization\Models\Approval::class],
+        'site' => [\Omsb\Organization\Models\Site::class],
+        'created_by_user' => [\Backend\Models\User::class, 'key' => 'created_by']
     ];
 
     /**
-     * Boot the model
+     * @var array hasMany relationships
      */
-    public static function boot(): void
-    {
-        parent::boot();
+    public $hasMany = [
+        'workflow_actions' => [WorkflowAction::class],
+        'approvals' => [WorkflowAction::class, 'conditions' => "action = 'approve'"],
+        'rejections' => [WorkflowAction::class, 'conditions' => "action = 'reject'"]
+    ];
 
-        // Auto-set performed_by and transitioned_at
-        static::creating(function ($model) {
-            if (BackendAuth::check()) {
-                $model->performed_by = BackendAuth::getUser()->id;
-            }
-            
-            if (!$model->transitioned_at) {
-                $model->transitioned_at = now();
-            }
-        });
+    /**
+     * @var array morphTo relationships
+     */
+    public $morphTo = [
+        'documentable' => []
+    ];
+
+    /**
+     * Scope for pending workflows
+     */
+    public function scopePending($query)
+    {
+        return $query->where('status', 'pending');
     }
 
     /**
-     * Get formatted description of the transition
+     * Scope for in progress workflows
      */
-    public function getDescriptionAttribute(): string
+    public function scopeInProgress($query)
     {
-        $desc = $this->performer->full_name ?? 'System';
-        $desc .= ' ' . $this->action;
-        
-        if ($this->from_status) {
-            $desc .= ' from ' . $this->from_status->name;
+        return $query->where('status', 'in_progress');
+    }
+
+    /**
+     * Scope for completed workflows
+     */
+    public function scopeCompleted($query)
+    {
+        return $query->where('status', 'completed');
+    }
+
+    /**
+     * Scope for overdue workflows
+     */
+    public function scopeOverdue($query)
+    {
+        return $query->where('is_overdue', true);
+    }
+
+    /**
+     * Scope for escalated workflows
+     */
+    public function scopeEscalated($query)
+    {
+        return $query->where('is_escalated', true);
+    }
+
+    /**
+     * Check if workflow is complete
+     */
+    public function isComplete()
+    {
+        return $this->status === 'completed';
+    }
+
+    /**
+     * Check if workflow has sufficient approvals for current step
+     */
+    public function hasSufficientApprovals()
+    {
+        return $this->approvals_received >= $this->approvals_required;
+    }
+
+    /**
+     * Get completion percentage
+     */
+    public function getCompletionPercentage()
+    {
+        if ($this->total_steps_required == 0) return 0;
+        return round(($this->steps_completed / $this->total_steps_required) * 100, 2);
+    }
+
+    /**
+     * Get workflow progress status
+     */
+    public function getProgressStatus()
+    {
+        if ($this->isComplete()) {
+            return 'Completed';
         }
         
-        $desc .= ' to ' . $this->to_status->name;
+        if ($this->is_overdue) {
+            return 'Overdue';
+        }
         
-        return $desc;
-    }
-
-    /**
-     * Scope: Filter by document
-     */
-    public function scopeForDocument($query, string $type, int $id)
-    {
-        return $query->where('workflowable_type', $type)
-                     ->where('workflowable_id', $id);
-    }
-
-    /**
-     * Scope: Filter by workflow
-     */
-    public function scopeForWorkflow($query, int $workflowId)
-    {
-        return $query->where('workflow_definition_id', $workflowId);
-    }
-
-    /**
-     * Scope: Filter by performer
-     */
-    public function scopeByPerformer($query, int $userId)
-    {
-        return $query->where('performed_by', $userId);
-    }
-
-    /**
-     * Scope: Recent transitions first
-     */
-    public function scopeRecent($query)
-    {
-        return $query->orderBy('transitioned_at', 'desc');
-    }
-
-    /**
-     * Get history for a specific document
-     */
-    public static function getHistoryForDocument(string $type, int $id)
-    {
-        return self::forDocument($type, $id)
-            ->with(['from_status', 'to_status', 'transition', 'performer'])
-            ->recent()
-            ->get();
+        if ($this->is_escalated) {
+            return 'Escalated';
+        }
+        
+        return ucfirst($this->status);
     }
 }

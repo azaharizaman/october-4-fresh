@@ -180,6 +180,229 @@ Validation is handled at the model level:
 - Site structure used for inventory management (Inventory plugin)
 - Company and site data used for procurement (Procurement plugin)
 
+## Approval System (Enhanced Multi-Level Approval)
+
+### Overview
+The Organization plugin manages **approval definitions and policies** for the entire OMSB system. It defines WHO can approve WHAT and HOW MUCH, supporting complex multi-level approval scenarios including quorum-based approvals.
+
+### Approval Model (Enhanced MLAS)
+
+The `Approval` model in Organization plugin combines traditional approval rules with Multi-Level Approval System (MLAS) functionality.
+
+**Core Approval Features:**
+```php
+// Basic approval definition
+'document_type'        // purchase_request, stock_adjustment, etc.
+'action'              // approve, review, authorize
+'floor_limit'         // Minimum value this approver can handle
+'ceiling_limit'       // Maximum value (null = unlimited)
+'from_status'         // Current document status to transition from
+'to_status'           // Target status after approval
+```
+
+**Multi-Approver Support (MLAS):**
+```php
+'approval_type'       // single, quorum, majority, unanimous
+'required_approvers'  // How many approvals needed (e.g., 3)
+'eligible_approvers'  // Total eligible pool (e.g., 5)
+'assignment_strategy' // manual, position_based, round_robin
+'eligible_position_ids' // JSON array of position IDs
+'eligible_staff_ids'   // JSON array of staff IDs
+```
+
+**Hierarchy and Validation:**
+```php
+'requires_hierarchy_validation' // Must be above creator in hierarchy
+'minimum_hierarchy_level'       // Minimum org chart level required
+'override_individual_limits'    // Can exceed staff ceiling limits
+```
+
+**Advanced Workflow Features:**
+```php
+'approval_timeout_days'         // Auto-escalate after X days
+'timeout_action'               // revert, escalate, auto_approve
+'escalation_approval_rule_id'  // Rule to escalate to
+'rejection_target_status'      // Where to go if rejected
+'requires_comment_on_rejection' // Force comments on rejection
+```
+
+### Business Logic Examples
+
+#### Single Approver
+```php
+// Manager approves up to $10,000 purchase requests
+Approval::create([
+    'code' => 'MGR_PR_10K',
+    'document_type' => 'purchase_request',
+    'action' => 'approve',
+    'approval_type' => 'single',
+    'required_approvers' => 1,
+    'ceiling_limit' => 10000,
+    'staff_id' => $manager->id
+]);
+```
+
+#### Quorum-based Approval
+```php
+// 3 out of 5 department heads must approve capital expenditure over $50K
+Approval::create([
+    'code' => 'CAPEX_QUORUM_3OF5',
+    'document_type' => 'purchase_request',
+    'action' => 'approve',
+    'approval_type' => 'quorum',
+    'required_approvers' => 3,
+    'eligible_approvers' => 5,
+    'assignment_strategy' => 'position_based',
+    'eligible_position_ids' => [1, 2, 3, 4, 5], // 5 dept head positions
+    'floor_limit' => 50000,
+    'budget_type' => 'Capital'
+]);
+```
+
+#### Position-based Assignment
+```php
+// Any Finance Manager at any site can approve budget transfers
+Approval::create([
+    'code' => 'FIN_MGR_BUDGET',
+    'document_type' => 'budget_transfer',
+    'assignment_strategy' => 'position_based',
+    'is_position_based' => true,
+    'eligible_position_ids' => [$financeManagerPosition->id],
+    'allow_external_site_approvers' => true
+]);
+```
+
+#### Escalation Chain
+```php
+// If department head doesn't approve in 5 days, escalate to VP
+$vpRule = Approval::create([...]);
+
+Approval::create([
+    'code' => 'DEPT_HEAD_WITH_ESCALATION',
+    'document_type' => 'expense_report',
+    'approval_timeout_days' => 5,
+    'timeout_action' => 'escalate',
+    'escalation_approval_rule_id' => $vpRule->id
+]);
+```
+
+### Integration with Workflow Plugin
+
+The Organization plugin defines approval rules, while the Workflow plugin executes them:
+
+```php
+// 1. Organization defines the rule
+$rule = Approval::getApplicableRule($document);
+
+// 2. Workflow creates instance to track execution
+$workflow = WorkflowInstance::create([
+    'current_approval_rule_id' => $rule->id,
+    'approvals_required' => $rule->required_approvers,
+    'current_approval_type' => $rule->approval_type
+]);
+
+// 3. Workflow tracks individual actions
+WorkflowAction::create([
+    'workflow_instance_id' => $workflow->id,
+    'approval_rule_id' => $rule->id,
+    'action' => 'approve'
+]);
+```
+
+### Staff Hierarchy and Approval Authority
+
+#### Hierarchical Validation
+```php
+// Approval rule requires hierarchy validation
+public function canApprove($staff, $document)
+{
+    if ($this->requires_hierarchy_validation) {
+        return $staff->isAboveInHierarchy($document->created_by);
+    }
+    return true;
+}
+```
+
+#### Site-based Authority
+```php
+// Staff can only approve for sites they're assigned to
+public function hasApprovalAuthority($staff, $site)
+{
+    if ($this->site_id && $this->site_id !== $site->id) {
+        return false;
+    }
+    
+    return $staff->canAccessSite($site);
+}
+```
+
+### Database Structure
+
+#### Enhanced Approvals Table
+```sql
+-- Basic approval fields
+code, document_type, action, floor_limit, ceiling_limit
+from_status, to_status, staff_id, site_id
+
+-- Multi-approver fields (MLAS)
+approval_type, required_approvers, eligible_approvers
+assignment_strategy, is_position_based, eligible_position_ids
+
+-- Hierarchy and validation
+requires_hierarchy_validation, minimum_hierarchy_level
+override_individual_limits
+
+-- Workflow integration
+approval_timeout_days, timeout_action, escalation_approval_rule_id
+rejection_target_status, requires_comment_on_rejection
+
+-- Delegation and effectiveness
+is_active, effective_from, effective_to
+allows_delegation, max_delegation_days
+```
+
+### Configuration Examples
+
+#### Department Budget Approvals
+```yaml
+# config/organization.php
+approval_scenarios:
+  department_budget:
+    small_purchases:      # Under $1,000
+      approval_type: single
+      required_approvers: 1
+      eligible_roles: [supervisor]
+    
+    medium_purchases:     # $1,000 - $10,000  
+      approval_type: single
+      required_approvers: 1
+      eligible_roles: [department_manager]
+    
+    large_purchases:      # Over $10,000
+      approval_type: quorum
+      required_approvers: 2
+      eligible_approvers: 3
+      eligible_roles: [department_manager, finance_manager, operations_manager]
+```
+
+### Migration History
+
+#### October 2025 - MLAS Integration
+**Background**: The Workflow plugin originally contained a separate MLAS table that duplicated approval functionality.
+
+**Changes**:
+1. **Merged MLAS into Organization**: All approval definitions consolidated in `omsb_organization_approvals`
+2. **Enhanced Approval Model**: Added multi-approver, quorum, position-based assignment capabilities  
+3. **Workflow Integration**: Clear separation between approval definitions (Organization) and execution (Workflow)
+4. **Backward Compatibility**: Existing approval rules enhanced, no breaking changes
+
+**Benefits**:
+- Single source of truth for all approval rules
+- Eliminated duplication between plugins
+- Enhanced multi-approver capabilities ("3 out of 5 approvers")
+- Better integration with organizational hierarchy
+- Support for complex enterprise approval scenarios
+
 ## Development Guidelines
 
 When extending this plugin:
@@ -199,3 +422,6 @@ Potential areas for expansion:
 - Bulk import/export of companies and addresses
 - Company contact management
 - Document attachment support
+- Approval rule templates and wizards
+- Real-time approval dashboard
+- Mobile approval interfaces

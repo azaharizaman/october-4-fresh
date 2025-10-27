@@ -44,6 +44,36 @@ return new class extends Migration
             $table->date('delegated_from')->nullable();
             $table->date('delegated_to')->nullable();
             
+            // Multi-approver support (MLAS functionality)
+            $table->string('approval_type', 20)->default('single'); // single, quorum, majority, unanimous
+            $table->integer('required_approvers')->default(1); // How many approvals needed
+            $table->integer('eligible_approvers')->nullable(); // Total eligible approvers (for quorum)
+            $table->boolean('requires_hierarchy_validation')->default(true); // Must be above creator in hierarchy
+            $table->integer('minimum_hierarchy_level')->nullable(); // Minimum level in org chart
+            
+            // Assignment strategies
+            $table->string('assignment_strategy', 20)->default('manual'); // manual, position_based, round_robin, load_balanced
+            $table->boolean('is_position_based')->default(false);
+            $table->boolean('allow_external_site_approvers')->default(false);
+            $table->json('eligible_position_ids')->nullable(); // Array of position IDs for position-based
+            $table->json('eligible_staff_ids')->nullable(); // Array of staff IDs for manual assignment
+            
+            // Advanced workflow settings
+            $table->boolean('override_individual_limits')->default(false); // Can override staff ceiling limits
+            $table->string('rejection_target_status')->nullable(); // Where to go if rejected
+            $table->boolean('requires_comment_on_rejection')->default(true);
+            $table->boolean('requires_comment_on_approval')->default(false);
+            
+            // Timeout and escalation
+            $table->integer('approval_timeout_days')->nullable(); // Auto-escalate after X days
+            $table->string('timeout_action', 20)->default('revert'); // revert, escalate, auto_approve
+            $table->foreignId('escalation_approval_rule_id')->nullable()->constrained('omsb_organization_approvals')->nullOnDelete();
+            
+            // Enhanced delegation settings
+            $table->boolean('allows_delegation')->default(true);
+            $table->integer('max_delegation_days')->nullable();
+            $table->boolean('requires_delegation_justification')->default(false);
+            
             // Categorization
             $table->string('transaction_category')->nullable(); // Further categorize documents
             $table->string('budget_type')->default('All'); // 'Capital', 'Operating', 'All'
@@ -76,6 +106,13 @@ return new class extends Migration
             $table->index(['floor_limit', 'ceiling_limit'], 'idx_approvals_limits');
             $table->index(['is_active', 'effective_from', 'effective_to'], 'idx_approvals_active_period');
             $table->index('deleted_at', 'idx_approvals_deleted_at');
+            
+            // New indexes for MLAS functionality
+            $table->index('approval_type', 'idx_approvals_approval_type');
+            $table->index(['required_approvers', 'eligible_approvers'], 'idx_approvals_quorum');
+            $table->index('assignment_strategy', 'idx_approvals_assignment_strategy');
+            $table->index('is_position_based', 'idx_approvals_position_based');
+            $table->index(['approval_timeout_days', 'timeout_action'], 'idx_approvals_timeout');
             
             // Unique constraint to prevent duplicate approval definitions
             $table->unique([

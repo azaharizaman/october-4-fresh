@@ -6,6 +6,27 @@
 - Built on top of OctoberCMS latest version that utilized Laravel 12 with PHP 8.2 and above supported. All custom codebase (other than config) resides within `/plugins/omsb` folder and strictly adhere to OctoberCMS conventions for plugins structure. Though OctoberCMS is a CMS first, it however includes a customizable and extendable backend administration panel that can be used to build complex business applications, and that is what this project is all about.
 - `/plugins/october/test` is a playground plugin created by the creator of OctoberCMS for testing and demo purposes. It is not part of the production codebase, but can be referenced for learning, code samples, and experimentation as most of the way the code is written following OctoberCMS conventions are included here.
 
+## Documentation Standards
+
+### **Architecture Documentation**
+- **Major Changes**: All significant architectural changes are documented in `ARCHITECTURE_CHANGELOG.md`
+- **Plugin Documentation**: Each plugin maintains a comprehensive `README.md` with business logic, models, and integration points
+- **Business Logic Changes**: When business logic changes affect multiple plugins or core workflows, update both plugin READMEs and the architecture changelog
+- **Migration Documentation**: Database schema changes are documented in migration files with clear comments explaining business rationale
+
+### **When to Update Documentation**
+1. **Architecture Changes**: Any modification affecting multiple plugins
+2. **Business Logic Changes**: New workflows, approval rules, or process modifications
+3. **Database Schema Changes**: Table/column additions or structural modifications
+4. **Integration Changes**: New cross-plugin relationships or external system connections
+5. **Major Bug Fixes**: Fixes that change expected behavior or business rules
+
+### **Documentation Locations**
+- `ARCHITECTURE_CHANGELOG.md`: Major architectural changes and their business impact
+- `plugins/omsb/*/README.md`: Plugin-specific functionality and business logic
+- `.github/copilot-instructions.md`: This file - architectural patterns and development guidelines
+- Migration files: Database changes with business context in comments
+
 ## Key Architectural Patterns
 - **Modules**: Core features (e.g., `backend`, `cms`, `editor`, `media`, `system`) are in `modules/`. Each module is self-contained with its own controllers, models, assets, and tests. Modules is just like plugins but provided by OctoberCMS core team and served the core functionalities of OctoberCMS itself. For complex backend views, partials and UI/UX along with JS and Ajax implementation can be referred to in these modules when required. Some of the way OctoberCMS handles these UI implementation not even surfaced in the documentation, thus referring to these core modules is very helpful.
 - **Plugins**: Domain-specific logic is in `plugins/omsb/*`. Each plugin follows standardized structure:

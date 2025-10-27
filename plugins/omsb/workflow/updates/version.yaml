@@ -1,7 +1,4 @@
 v1.0.1:
-    - First version of Workflow
-    - create_workflow_definitions_table.php
-    - create_workflow_statuses_table.php
-    - create_approver_roles_table.php
-    - create_workflow_transitions_table.php
+    - 'First version of Workflow'
     - create_workflow_instances_table.php
+    - create_workflow_actions_table.php
