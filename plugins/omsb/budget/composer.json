@@ -1,0 +1,15 @@
+{
+    "name": "omsb/budget-plugin",
+    "type": "october-plugin",
+    "description": "Budget management system for yearly budget planning with transactions",
+    "require": {
+        "php": ">=8.2",
+        "composer/installers": "~1.0"
+    },
+    "authors": [
+        {
+            "name": "Omsb",
+            "email": "support@omsb.com"
+        }
+    ]
+}

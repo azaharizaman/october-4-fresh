@@ -1,0 +1,21 @@
+# ===================================
+#  Form Behavior Config
+# ===================================
+
+name: Budget Adjustment
+form: $/omsb/budget/models/budgetadjustment/fields.yaml
+modelClass: Omsb\Budget\Models\BudgetAdjustment
+defaultRedirect: omsb/budget/budgetadjustments
+
+create:
+    title: Create Budget Adjustment
+    redirect: omsb/budget/budgetadjustments/update/:id
+    redirectClose: omsb/budget/budgetadjustments
+
+update:
+    title: Edit Budget Adjustment
+    redirect: omsb/budget/budgetadjustments/update/:id
+    redirectClose: omsb/budget/budgetadjustments
+
+preview:
+    title: Preview Budget Adjustment

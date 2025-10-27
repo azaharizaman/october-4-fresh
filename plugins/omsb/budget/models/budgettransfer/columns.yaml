@@ -1,0 +1,61 @@
+# ===================================
+#  List Column Definitions
+# ===================================
+
+columns:
+    id:
+        label: ID
+        searchable: true
+        sortable: true
+        width: 80
+        
+    document_number:
+        label: Document Number
+        searchable: true
+        sortable: true
+        width: 150
+        
+    transfer_type:
+        label: Type
+        searchable: true
+        sortable: true
+        width: 100
+        
+    from_budget:
+        label: From Budget
+        relation: from_budget
+        select: budget_code
+        searchable: true
+        sortable: true
+        
+    to_budget:
+        label: To Budget
+        relation: to_budget
+        select: budget_code
+        searchable: true
+        sortable: true
+        
+    amount:
+        label: Amount
+        type: number
+        sortable: true
+        align: right
+        width: 120
+        
+    status:
+        label: Status
+        searchable: true
+        sortable: true
+        width: 120
+        
+    transfer_date:
+        label: Transfer Date
+        type: date
+        sortable: true
+        width: 130
+        
+    created_at:
+        label: Created At
+        type: datetime
+        sortable: true
+        width: 160

@@ -1,0 +1,43 @@
+# ===================================
+#  Relation Behavior Config
+# ===================================
+
+# Transfer Outward
+transfers_outward:
+    label: Outward Transfers
+    view:
+        list: $/omsb/budget/models/budgettransfer/columns_outward.yaml
+        toolbarButtons: create|delete
+    manage:
+        form: $/omsb/budget/models/budgettransfer/fields.yaml
+        recordsPerPage: 10
+
+# Transfer Inward
+transfers_inward:
+    label: Inward Transfers
+    view:
+        list: $/omsb/budget/models/budgettransfer/columns_inward.yaml
+        toolbarButtons: create|delete
+    manage:
+        form: $/omsb/budget/models/budgettransfer/fields.yaml
+        recordsPerPage: 10
+
+# Adjustments
+adjustments:
+    label: Budget Adjustments
+    view:
+        list: $/omsb/budget/models/budgetadjustment/columns.yaml
+        toolbarButtons: create|delete
+    manage:
+        form: $/omsb/budget/models/budgetadjustment/fields.yaml
+        recordsPerPage: 10
+
+# Reallocations
+reallocations:
+    label: Budget Reallocations
+    view:
+        list: $/omsb/budget/models/budgetreallocation/columns.yaml
+        toolbarButtons: create|delete
+    manage:
+        form: $/omsb/budget/models/budgetreallocation/fields.yaml
+        recordsPerPage: 10

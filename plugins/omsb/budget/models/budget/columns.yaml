@@ -1,0 +1,80 @@
+# ===================================
+#  List Column Definitions
+# ===================================
+
+columns:
+    id:
+        label: ID
+        searchable: true
+        sortable: true
+        width: 80
+        
+    budget_code:
+        label: Budget Code
+        searchable: true
+        sortable: true
+        width: 200
+        
+    description:
+        label: Description
+        searchable: true
+        sortable: true
+        
+    year:
+        label: Year
+        searchable: true
+        sortable: true
+        width: 100
+        
+    site:
+        label: Site
+        relation: site
+        select: name
+        searchable: true
+        sortable: true
+        width: 150
+        
+    gl_account:
+        label: GL Account
+        relation: gl_account
+        select: account_code
+        searchable: true
+        sortable: true
+        width: 120
+        
+    service_code:
+        label: Service
+        searchable: true
+        sortable: true
+        width: 100
+        
+    allocated_amount:
+        label: Allocated Amount
+        type: number
+        sortable: true
+        align: right
+        width: 150
+        
+    status:
+        label: Status
+        searchable: true
+        sortable: true
+        width: 120
+        
+    effective_from:
+        label: Effective From
+        type: date
+        sortable: true
+        width: 130
+        
+    effective_to:
+        label: Effective To
+        type: date
+        sortable: true
+        width: 130
+        
+    created_at:
+        label: Created At
+        type: datetime
+        sortable: true
+        width: 160

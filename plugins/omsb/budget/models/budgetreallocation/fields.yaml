@@ -1,0 +1,68 @@
+# ===================================
+#  Form Field Definitions
+# ===================================
+
+fields:
+    document_number:
+        label: Document Number
+        type: text
+        placeholder: Will be auto-generated
+        span: left
+        required: true
+        
+    from_gl_account:
+        label: From GL Account
+        type: relation
+        nameFrom: display_name
+        emptyOption: -- Select Source GL Account --
+        span: left
+        required: true
+        
+    to_gl_account:
+        label: To GL Account
+        type: relation
+        nameFrom: display_name
+        emptyOption: -- Select Destination GL Account --
+        span: right
+        required: true
+        
+    amount:
+        label: Reallocation Amount
+        type: number
+        step: 0.01
+        placeholder: 0.00
+        span: left
+        required: true
+        
+    reallocation_date:
+        label: Reallocation Date
+        type: datepicker
+        mode: date
+        span: right
+        required: true
+        
+    status:
+        label: Status
+        type: dropdown
+        options:
+            draft: Draft
+            submitted: Submitted
+            approved: Approved
+            rejected: Rejected
+            cancelled: Cancelled
+            completed: Completed
+        span: left
+        default: draft
+        
+    reason:
+        label: Reason / Justification
+        type: textarea
+        size: small
+        span: full
+        required: true
+        
+    notes:
+        label: Notes
+        type: textarea
+        size: small
+        span: full

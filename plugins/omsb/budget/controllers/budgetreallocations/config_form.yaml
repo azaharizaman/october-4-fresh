@@ -1,0 +1,21 @@
+# ===================================
+#  Form Behavior Config
+# ===================================
+
+name: Budget Reallocation
+form: $/omsb/budget/models/budgetreallocation/fields.yaml
+modelClass: Omsb\Budget\Models\BudgetReallocation
+defaultRedirect: omsb/budget/budgetreallocations
+
+create:
+    title: Create Budget Reallocation
+    redirect: omsb/budget/budgetreallocations/update/:id
+    redirectClose: omsb/budget/budgetreallocations
+
+update:
+    title: Edit Budget Reallocation
+    redirect: omsb/budget/budgetreallocations/update/:id
+    redirectClose: omsb/budget/budgetreallocations
+
+preview:
+    title: Preview Budget Reallocation

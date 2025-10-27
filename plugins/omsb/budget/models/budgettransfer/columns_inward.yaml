@@ -1,0 +1,28 @@
+# ===================================
+#  List Column Definitions (Inward)
+# ===================================
+
+columns:
+    document_number:
+        label: Document Number
+        searchable: true
+        sortable: true
+        
+    from_budget:
+        label: From Budget
+        relation: from_budget
+        select: budget_code
+        searchable: true
+        
+    amount:
+        label: Amount
+        type: number
+        align: right
+        
+    status:
+        label: Status
+        searchable: true
+        
+    transfer_date:
+        label: Transfer Date
+        type: date

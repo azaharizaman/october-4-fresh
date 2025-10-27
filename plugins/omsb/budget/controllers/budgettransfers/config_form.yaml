@@ -1,0 +1,31 @@
+# ===================================
+#  Form Behavior Config
+# ===================================
+
+# Record name
+name: Budget Transfer
+
+# Model Form Field configuration
+form: $/omsb/budget/models/budgettransfer/fields.yaml
+
+# Model Class name
+modelClass: Omsb\Budget\Models\BudgetTransfer
+
+# Default redirect location
+defaultRedirect: omsb/budget/budgettransfers
+
+# Create page
+create:
+    title: Create Budget Transfer
+    redirect: omsb/budget/budgettransfers/update/:id
+    redirectClose: omsb/budget/budgettransfers
+
+# Update page
+update:
+    title: Edit Budget Transfer
+    redirect: omsb/budget/budgettransfers/update/:id
+    redirectClose: omsb/budget/budgettransfers
+
+# Preview page
+preview:
+    title: Preview Budget Transfer
