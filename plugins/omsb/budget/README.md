@@ -315,9 +315,9 @@ $reallocation = BudgetReallocation::create([
 - [x] Model validation and business rules
 
 ### Phase 2 (Pending)
-- [ ] Backend controllers and views
-- [ ] YAML configurations for forms and lists
-- [ ] Integration with Registrar for document numbers
+- [x] Backend controllers and views
+- [x] YAML configurations for forms and lists
+- [x] Integration with Registrar for document numbers
 - [ ] Workflow integration for approval flows
 
 ### Phase 3 (Future)
