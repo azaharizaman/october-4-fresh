@@ -20,7 +20,7 @@ This directory contains comprehensive documentation for the Feeder Plugin, cover
 | [09_improvements.md](09_improvements.md) | Prioritized roadmap with 10 improvement proposals | 625 |
 | [10_automation.md](10_automation.md) | CI/CD pipelines, automated tasks, monitoring | 683 |
 
-**Total Documentation:** ~8,100 lines covering all aspects of the plugin.
+**Total Documentation:** 8,106 lines covering all aspects of the plugin.
 
 ## Quick Navigation
 
