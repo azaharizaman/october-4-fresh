@@ -1,0 +1,85 @@
+name: 🧩 Plugin Analysis & Documentation
+on:
+  issue_comment:
+    types: [created]
+  issues:
+    types: [labeled]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: read
+
+jobs:
+  analyze-plugin:
+    if: |
+      (github.event_name == 'issues' && contains(github.event.issue.labels.*.name, 'copilot-agent')) ||
+      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '/analyze-plugin')) ||
+      (github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-latest
+    name: Run Plugin Analyzer
+    steps:
+      - name: 🧾 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: ⚙️ Setup PHP environment
+        uses: shivammathur/setup-php@v4
+        with:
+          php-version: '8.2'
+          tools: composer
+          coverage: none
+
+      - name: 📦 Install Composer dependencies
+        run: |
+          composer install --no-interaction --no-progress --prefer-dist
+
+      - name: 🧠 Parse plugin name
+        id: parse
+        run: |
+          # Try to detect plugin name from issue or comment
+          if [[ "${{ github.event.comment.body }}" == *"/analyze-plugin "* ]]; then
+            plugin=$(echo "${{ github.event.comment.body }}" | sed 's/.*\/analyze-plugin //')
+          else
+            plugin=$(echo "${{ github.event.issue.title }}" | sed 's/.*Analyze & Document //;s/]//g')
+          fi
+          echo "plugin=${plugin}" >> $GITHUB_OUTPUT
+          echo "Detected plugin: ${plugin}"
+
+      - name: 🔍 Run plugin analyzer
+        run: |
+          mkdir -p plugins/omsb/${{ steps.parse.outputs.plugin }}/docs
+          php tools/plugin-analyzer.php plugins/omsb/${{ steps.parse.outputs.plugin }} \
+            --out plugins/omsb/${{ steps.parse.outputs.plugin }}/docs
+
+      - name: 🧩 Post-analysis verification
+        run: |
+          if [ ! -f plugins/omsb/${{ steps.parse.outputs.plugin }}/docs/00_index.md ]; then
+            echo "Documentation output not found!"
+            exit 1
+          fi
+          echo "Documentation generated successfully."
+
+      - name: 💾 Commit and create Pull Request
+        uses: peter-evans/create-pull-request@v5
+        with:
+          commit-message: "[docs] Add ${{ steps.parse.outputs.plugin }} analysis & documentation"
+          branch: docs/${{ steps.parse.outputs.plugin }}-analysis
+          title: "[docs] Add ${{ steps.parse.outputs.plugin }} analysis & documentation"
+          body: |
+            Auto-generated plugin documentation and analysis for **${{ steps.parse.outputs.plugin }}**.
+
+            Generated via Copilot Agent using `plugin-analyzer.php`.
+
+            ✅ Includes:
+            - Models, controllers, and YAML documentation
+            - API endpoints, events, and services
+            - Code review and improvement recommendations
+            - Security and performance analysis
+
+          labels: |
+            documentation
+            plugin
+            copilot-agent
+          reviewers: |
+            @AzahariZaman
