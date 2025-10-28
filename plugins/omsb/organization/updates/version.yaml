@@ -9,3 +9,10 @@ v1.0.2:
   - create_gl_accounts_table.php
   - create_service_settings_table.php
   - create_financial_periods_table.php
+v1.0.3:
+  - 'UOM Management - Organization-level UOM with base normalization'
+  - create_unit_of_measures_table.php
+  - create_uom_conversions_table.php
+v1.0.4:
+  - 'Seed base UOMs (ROLL, PACK, BOX, DRUM, EA, KG, L, M, etc.)'
+  - seed_base_unit_of_measures.php
