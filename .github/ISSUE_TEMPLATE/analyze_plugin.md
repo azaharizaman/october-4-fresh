@@ -118,12 +118,12 @@ Each suggestion should include:
 
 ## ✅ Acceptance Checklist
 - [ ] /docs/ directory created with all deliverables.
-- 	[ ] Integration and dependency diagrams included.
-- 	[ ] 07_code_review.md includes ≥10 findings.
-- 	[ ] API endpoints documented with request/response samples.
-- 	[ ] 3 suggested improvements with implementation outlines.
-- 	[ ] Test plan provided with at least 3 sample test skeletons.
-- 	[ ] Security and performance notes documented.
+- [ ] Integration and dependency diagrams included.
+- [ ] 07_code_review.md includes ≥10 findings.
+- [ ] API endpoints documented with request/response samples.
+- [ ] 3 suggested improvements with implementation outlines.
+- [ ] Test plan provided with at least 3 sample test skeletons.
+- [ ] Security and performance notes documented.
 
 ---
 
