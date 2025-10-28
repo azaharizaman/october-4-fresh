@@ -40,11 +40,26 @@ class WarehouseItem extends Model
 {
     use \October\Rain\Database\Traits\Validation;
     use \October\Rain\Database\Traits\SoftDelete;
+    use \Omsb\Feeder\Traits\HasFeed;
 
     /**
      * @var string table name
      */
     public $table = 'omsb_inventory_warehouse_items';
+
+    /**
+     * HasFeed trait configuration
+     */
+    protected $feedMessageTemplate = '{actor} {action} Warehouse Item for {purchaseable_item}';
+    protected $feedableActions = ['created', 'updated', 'deleted', 'reorder_triggered', 'count_updated'];
+    protected $feedSignificantFields = ['quantity_on_hand', 'quantity_reserved', 'minimum_stock_level', 'is_active'];
+    
+    protected function getFeedTemplatePlaceholders(): array
+    {
+        return [
+            '{purchaseable_item}' => $this->purchaseable_item ? $this->purchaseable_item->name : 'Unknown Item'
+        ];
+    }
 
     /**
      * @var array fillable fields

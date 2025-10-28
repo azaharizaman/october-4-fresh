@@ -39,6 +39,7 @@ class Mrn extends Model
     use \October\Rain\Database\Traits\Validation;
     use \October\Rain\Database\Traits\SoftDelete;
     use HasControlledDocumentNumber;
+    use \Omsb\Feeder\Traits\HasFeed;
 
     /**
      * @var string table name
@@ -48,7 +49,14 @@ class Mrn extends Model
     /**
      * @var string document type code for registrar
      */
-    protected string $documentTypeCode = 'MRN';
+    protected $documentTypeCode = 'MRN';
+
+    /**
+     * HasFeed trait configuration
+     */
+    protected $feedMessageTemplate = '{actor} {action} Material Received Note {model_identifier}';
+    protected $feedableActions = ['created', 'updated', 'deleted', 'submitted', 'approved', 'completed', 'cancelled'];
+    protected $feedSignificantFields = ['status', 'total_received_value', 'received_date', 'warehouse_id'];
 
     /**
      * @var array statuses that lock the document

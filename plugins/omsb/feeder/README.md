@@ -6,6 +6,29 @@ The Feeder plugin is a centralized activity tracking system that logs all user a
 
 **Important:** Feed records are system-generated and cannot be manually created, edited, or deleted. They are automatically created by the system when triggered by certain activities or explicitly called by other methods or events.
 
+## Quick Start
+
+**Add activity tracking to any model in 3 steps:**
+
+```php
+// 1. Add the trait
+use Omsb\Feeder\Traits\HasFeed;
+
+class YourModel extends Model
+{
+    use HasFeed;
+    
+    // 2. Configure feed behavior (optional)
+    protected $feedMessageTemplate = '{actor} {action} {model} {model_identifier}';
+    protected $feedableActions = ['created', 'updated', 'deleted', 'approved'];
+    protected $feedSignificantFields = ['status', 'total_amount'];
+    
+    // 3. Done! Feeds are automatically created on model events
+}
+```
+
+**See [HasFeed Trait Documentation](./docs/hasfeed-trait.md) for complete guide.**
+
 ## Key Concepts
 
 ### Feed Model
@@ -104,6 +127,40 @@ The Feeder plugin does not provide a dedicated backend navigation menu. Feed rec
 - `user_id` references `backend_users.id` with NULL ON DELETE
 
 ## Usage Examples
+
+### Using HasFeed Trait (Recommended)
+
+**The recommended way to integrate feed tracking is via the `HasFeed` trait:**
+
+```php
+use Omsb\Feeder\Traits\HasFeed;
+
+class PurchaseRequest extends Model
+{
+    use HasFeed;
+    
+    protected $feedMessageTemplate = '{actor} {action} Purchase Request {model_identifier}';
+    protected $feedableActions = ['created', 'updated', 'deleted', 'approved', 'rejected'];
+    protected $feedSignificantFields = ['status', 'total_amount', 'priority'];
+}
+
+// Feeds are now created automatically!
+$pr = PurchaseRequest::create([...]); // Feed created automatically
+
+// Record custom actions
+$pr->recordAction('approved', ['approver' => 'Manager']);
+
+// Access feeds
+$pr->feeds; // All feeds
+$pr->getRecentFeeds(10); // Last 10 feeds
+$pr->getFeedsByAction('approved'); // Filter by action
+```
+
+**See [HasFeed Trait Documentation](./docs/hasfeed-trait.md) for complete guide with 13 integrated models.**
+
+### Manual Feed Creation (Legacy)
+
+For cases where you need manual control over feed creation:
 
 ### Displaying Feed in a Sidebar
 

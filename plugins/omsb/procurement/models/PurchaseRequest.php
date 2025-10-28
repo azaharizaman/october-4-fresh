@@ -32,6 +32,7 @@ class PurchaseRequest extends Model
     use \October\Rain\Database\Traits\Validation;
     use \October\Rain\Database\Traits\SoftDelete;
     use \Omsb\Workflow\Traits\HasWorkflow;
+    use \Omsb\Feeder\Traits\HasFeed;
 
     /**
      * @var string table name
@@ -52,6 +53,13 @@ class PurchaseRequest extends Model
      * This prevents ValidationException when line items are modified
      */
     protected $workflowAllowedFields = ['total_amount'];
+
+    /**
+     * HasFeed trait configuration
+     */
+    protected $feedMessageTemplate = '{actor} {action} Purchase Request {model_identifier} ({status})';
+    protected $feedableActions = ['created', 'updated', 'deleted', 'submitted', 'approved', 'rejected', 'cancelled'];
+    protected $feedSignificantFields = ['status', 'total_amount', 'priority', 'required_date'];
 
     /**
      * @var array fillable fields

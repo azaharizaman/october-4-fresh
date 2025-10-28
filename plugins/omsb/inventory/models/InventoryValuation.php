@@ -16,8 +16,16 @@ class InventoryValuation extends Model
 {
     use \October\Rain\Database\Traits\Validation;
     use \October\Rain\Database\Traits\SoftDelete;
+    use \Omsb\Feeder\Traits\HasFeed;
 
     public $table = 'omsb_inventory_inventory_valuations';
+
+    /**
+     * HasFeed trait configuration
+     */
+    protected $feedMessageTemplate = '{actor} {action} Inventory Valuation {model_identifier}';
+    protected $feedableActions = ['created', 'updated', 'deleted', 'initiated', 'completed'];
+    protected $feedSignificantFields = ['status', 'total_valuation_amount', 'valuation_method', 'valuation_date'];
 
     protected $fillable = [
         'valuation_number', 'inventory_period_id', 'warehouse_id',

@@ -18,6 +18,7 @@ class MriReturn extends Model
     use \October\Rain\Database\Traits\Validation;
     use \October\Rain\Database\Traits\SoftDelete;
     use HasControlledDocumentNumber;
+    use \Omsb\Feeder\Traits\HasFeed;
 
     /**
      * @var string table name
@@ -33,6 +34,13 @@ class MriReturn extends Model
      * @var array statuses that lock the document
      */
     protected array $protectedStatuses = ['approved', 'completed'];
+
+    /**
+     * HasFeed trait configuration
+     */
+    protected $feedMessageTemplate = '{actor} {action} MRI Return {model_identifier}';
+    protected $feedableActions = ['created', 'updated', 'deleted', 'submitted', 'approved', 'completed'];
+    protected $feedSignificantFields = ['status', 'total_return_value', 'return_reason'];
 
     protected $fillable = [
         'return_number', 'document_number', 'registry_id', 'mri_id', 'warehouse_id', 'return_date',

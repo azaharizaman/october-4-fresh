@@ -62,11 +62,19 @@ class Vendor extends Model
 {
     use \October\Rain\Database\Traits\Validation;
     use \October\Rain\Database\Traits\SoftDelete;
+    use \Omsb\Feeder\Traits\HasFeed;
 
     /**
      * @var string table name
      */
     public $table = 'omsb_procurement_vendors';
+
+    /**
+     * HasFeed trait configuration
+     */
+    protected $feedMessageTemplate = '{actor} {action} Vendor "{name}" ({code})';
+    protected $feedableActions = ['created', 'updated', 'deleted', 'approved', 'suspended', 'reactivated'];
+    protected $feedSignificantFields = ['name', 'code', 'status', 'is_approved', 'contact_email', 'credit_limit'];
 
     /**
      * @var array fillable fields

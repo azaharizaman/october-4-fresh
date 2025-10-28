@@ -2,9 +2,9 @@
 
 use Model;
 use BackendAuth;
-use Omsb\Registrar\Traits\HasControlledDocumentNumber;
 use Carbon\Carbon;
 use ValidationException;
+use Omsb\Registrar\Traits\HasControlledDocumentNumber;
 
 /**
  * Mri Model - Material Request Issuance
@@ -40,6 +40,7 @@ class Mri extends Model
     use \October\Rain\Database\Traits\Validation;
     use \October\Rain\Database\Traits\SoftDelete;
     use HasControlledDocumentNumber;
+    use \Omsb\Feeder\Traits\HasFeed;
 
     /**
      * @var string table name
@@ -49,7 +50,14 @@ class Mri extends Model
     /**
      * @var string document type code for registrar
      */
-    protected string $documentTypeCode = 'MRI';
+    protected $documentTypeCode = 'MRI';
+
+    /**
+     * HasFeed trait configuration
+     */
+    protected $feedMessageTemplate = '{actor} {action} Material Request Issuance {model_identifier}';
+    protected $feedableActions = ['created', 'updated', 'deleted', 'submitted', 'approved', 'completed', 'cancelled'];
+    protected $feedSignificantFields = ['status', 'total_issue_value', 'issue_date', 'issue_purpose'];
 
     /**
      * @var array statuses that lock the document

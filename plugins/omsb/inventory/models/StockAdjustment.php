@@ -2,9 +2,9 @@
 
 use Model;
 use BackendAuth;
-use Omsb\Registrar\Traits\HasControlledDocumentNumber;
 use Carbon\Carbon;
 use ValidationException;
+use Omsb\Registrar\Traits\HasControlledDocumentNumber;
 
 /**
  * StockAdjustment Model
@@ -35,6 +35,7 @@ class StockAdjustment extends Model
     use \October\Rain\Database\Traits\Validation;
     use \October\Rain\Database\Traits\SoftDelete;
     use HasControlledDocumentNumber;
+    use \Omsb\Feeder\Traits\HasFeed;
 
     /**
      * @var string table name
@@ -45,6 +46,13 @@ class StockAdjustment extends Model
      * @var string document type code for registrar
      */
     protected string $documentTypeCode = 'SADJ';
+
+    /**
+     * HasFeed trait configuration
+     */
+    protected $feedMessageTemplate = '{actor} {action} Stock Adjustment {model_identifier}';
+    protected $feedableActions = ['created', 'updated', 'deleted', 'submitted', 'approved', 'completed'];
+    protected $feedSignificantFields = ['status', 'total_value_impact', 'reason_code', 'adjustment_date'];
 
     /**
      * @var array statuses that lock the document

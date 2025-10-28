@@ -20,6 +20,7 @@ class PhysicalCount extends Model
     use \October\Rain\Database\Traits\Validation;
     use \October\Rain\Database\Traits\SoftDelete;
     use HasControlledDocumentNumber;
+    use \Omsb\Feeder\Traits\HasFeed;
 
     /**
      * @var string table name
@@ -35,6 +36,13 @@ class PhysicalCount extends Model
      * @var array statuses that lock the document
      */
     protected array $protectedStatuses = ['completed', 'variance_review'];
+
+    /**
+     * HasFeed trait configuration
+     */
+    protected $feedMessageTemplate = '{actor} {action} Physical Count {model_identifier}';
+    protected $feedableActions = ['created', 'updated', 'deleted', 'initiated', 'completed', 'variance_review'];
+    protected $feedSignificantFields = ['status', 'count_date', 'variance_count', 'total_items_counted'];
 
     protected $fillable = [
         'count_number', 'document_number', 'registry_id', 'warehouse_id', 'count_date', 'count_type',

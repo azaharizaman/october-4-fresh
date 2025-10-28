@@ -35,11 +35,19 @@ class Warehouse extends Model
 {
     use \October\Rain\Database\Traits\Validation;
     use \October\Rain\Database\Traits\SoftDelete;
+    use \Omsb\Feeder\Traits\HasFeed;
 
     /**
      * @var string table name
      */
     public $table = 'omsb_inventory_warehouses';
+
+    /**
+     * HasFeed trait configuration
+     */
+    protected $feedMessageTemplate = '{actor} {action} Warehouse "{name}" ({code})';
+    protected $feedableActions = ['created', 'updated', 'deleted', 'activated', 'deactivated', 'maintenance'];
+    protected $feedSignificantFields = ['name', 'code', 'status', 'is_receiving_warehouse', 'in_charge_person'];
 
     /**
      * @var array fillable fields

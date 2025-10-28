@@ -2,9 +2,9 @@
 
 use Model;
 use BackendAuth;
-use Omsb\Registrar\Traits\HasControlledDocumentNumber;
 use Carbon\Carbon;
 use ValidationException;
+use Omsb\Registrar\Traits\HasControlledDocumentNumber;
 
 /**
  * StockTransfer Model
@@ -42,6 +42,7 @@ class StockTransfer extends Model
     use \October\Rain\Database\Traits\Validation;
     use \October\Rain\Database\Traits\SoftDelete;
     use HasControlledDocumentNumber;
+    use \Omsb\Feeder\Traits\HasFeed;
 
     /**
      * @var string table name
@@ -51,7 +52,14 @@ class StockTransfer extends Model
     /**
      * @var string document type code for registrar
      */
-    protected string $documentTypeCode = 'STFR';
+    protected string $documentTypeCode = 'STRF';
+
+    /**
+     * HasFeed trait configuration
+     */
+    protected $feedMessageTemplate = '{actor} {action} Stock Transfer {model_identifier}';
+    protected $feedableActions = ['created', 'updated', 'deleted', 'approved', 'shipped', 'received', 'cancelled'];
+    protected $feedSignificantFields = ['status', 'total_transfer_value', 'from_warehouse_id', 'to_warehouse_id'];
 
     /**
      * @var array statuses that lock the document

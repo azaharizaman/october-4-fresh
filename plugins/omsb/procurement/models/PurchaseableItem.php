@@ -42,11 +42,19 @@ class PurchaseableItem extends Model
 {
     use \October\Rain\Database\Traits\Validation;
     use \October\Rain\Database\Traits\SoftDelete;
+    use \Omsb\Feeder\Traits\HasFeed;
 
     /**
      * @var string table name
      */
     public $table = 'omsb_procurement_purchaseable_items';
+
+    /**
+     * HasFeed trait configuration
+     */
+    protected $feedMessageTemplate = '{actor} {action} {model} "{name}" ({code})';
+    protected $feedableActions = ['created', 'updated', 'deleted', 'discontinued', 'reactivated'];
+    protected $feedSignificantFields = ['name', 'code', 'is_active', 'is_discontinued', 'standard_cost', 'is_inventory_item'];
 
     /**
      * @var array fillable fields
