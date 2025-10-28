@@ -13,19 +13,22 @@ use Carbon\Carbon;
  *
  * @property int $id
  * @property int $warehouse_item_id Affected warehouse item (SKU)
+ * @property int|null $base_uom_id Base UOM (matches WarehouseItem base_uom_id)
  * @property string $document_type Source document class (morphTo)
  * @property int $document_id Source document ID
  * @property string $transaction_type Type (receipt, issue, adjustment, transfer_in, transfer_out)
- * @property float $quantity_change +/- quantity value
- * @property float $quantity_before Balance before transaction
- * @property float $quantity_after Balance after transaction
+ * @property float $quantity_change +/- quantity value (ALWAYS in base UOM)
+ * @property float $quantity_before Balance before transaction (ALWAYS in base UOM)
+ * @property float $quantity_after Balance after transaction (ALWAYS in base UOM)
  * @property float|null $unit_cost Cost per unit for valuation
  * @property float|null $total_cost quantity × unit_cost
  * @property string|null $reference_number Document reference
  * @property \Carbon\Carbon $transaction_date When transaction occurred
  * @property string|null $notes Additional context
  * @property bool $is_locked Prevents modification after month-end
- * @property int $transaction_uom_id UOM used in transaction
+ * @property int $transaction_uom_id UOM used in transaction (legacy)
+ * @property int|null $original_transaction_uom_id Original UOM used in transaction (audit trail)
+ * @property float|null $original_transaction_quantity Original quantity in transaction UOM (audit trail)
  * @property float $quantity_in_transaction_uom Actual qty in transaction UOM
  * @property float $quantity_in_default_uom Converted qty for reporting
  * @property float $conversion_factor_used Audit trail of conversion rate
@@ -50,6 +53,7 @@ class InventoryLedger extends Model
      */
     protected $fillable = [
         'warehouse_item_id',
+        'base_uom_id',
         'document_type',
         'document_id',
         'transaction_type',
@@ -63,6 +67,8 @@ class InventoryLedger extends Model
         'notes',
         'is_locked',
         'transaction_uom_id',
+        'original_transaction_uom_id',
+        'original_transaction_quantity',
         'quantity_in_transaction_uom',
         'quantity_in_default_uom',
         'conversion_factor_used',
@@ -73,10 +79,13 @@ class InventoryLedger extends Model
      * @var array attributes that should be converted to null when empty
      */
     protected $nullable = [
+        'base_uom_id',
         'unit_cost',
         'total_cost',
         'reference_number',
         'notes',
+        'original_transaction_uom_id',
+        'original_transaction_quantity',
         'inventory_period_id'
     ];
 
@@ -85,6 +94,7 @@ class InventoryLedger extends Model
      */
     public $rules = [
         'warehouse_item_id' => 'required|integer|exists:omsb_inventory_warehouse_items,id',
+        'base_uom_id' => 'nullable|integer|exists:omsb_organization_unit_of_measures,id',
         'document_type' => 'required|string',
         'document_id' => 'required|integer',
         'transaction_type' => 'required|in:receipt,issue,adjustment,transfer_in,transfer_out',
@@ -95,6 +105,8 @@ class InventoryLedger extends Model
         'total_cost' => 'nullable|numeric',
         'transaction_date' => 'required|date',
         'transaction_uom_id' => 'required|integer|exists:omsb_inventory_unit_of_measures,id',
+        'original_transaction_uom_id' => 'nullable|integer|exists:omsb_organization_unit_of_measures,id',
+        'original_transaction_quantity' => 'nullable|numeric',
         'quantity_in_transaction_uom' => 'required|numeric',
         'quantity_in_default_uom' => 'required|numeric',
         'conversion_factor_used' => 'required|numeric|min:0.000001',
@@ -141,9 +153,17 @@ class InventoryLedger extends Model
         'warehouse_item' => [
             WarehouseItem::class
         ],
+        'base_uom' => [
+            'Omsb\Organization\Models\UnitOfMeasure',
+            'key' => 'base_uom_id'
+        ],
         'transaction_uom' => [
             UnitOfMeasure::class,
             'key' => 'transaction_uom_id'
+        ],
+        'original_transaction_uom' => [
+            'Omsb\Organization\Models\UnitOfMeasure',
+            'key' => 'original_transaction_uom_id'
         ],
         'inventory_period' => [
             InventoryPeriod::class
