@@ -51,31 +51,27 @@ DB::table('omsb_feeder_feeds')->where('id', 1)->delete();
 
 **Recommendation:**
 
-Add database-level constraints using triggers:
+Add database-level constraints using triggers. **Note:** The following example is for MySQL only. OctoberCMS plugins should support multiple database engines; see below for PostgreSQL equivalent.
+
+**MySQL Example:**
 
 ```sql
--- Migration to add triggers
-Schema::connection()->getPdo()->exec("
-    CREATE TRIGGER prevent_feed_update
-    BEFORE UPDATE ON omsb_feeder_feeds
-    FOR EACH ROW
-    BEGIN
-        SIGNAL SQLSTATE '45000' 
-        SET MESSAGE_TEXT = 'Feed records are immutable and cannot be modified';
-    END
-");
+-- Migration to add triggers (MySQL)
+CREATE TRIGGER prevent_feed_update
+BEFORE UPDATE ON omsb_feeder_feeds
+FOR EACH ROW
+BEGIN
+    SIGNAL SQLSTATE '45000' 
+    SET MESSAGE_TEXT = 'Feed records are immutable and cannot be modified';
+END;
 
-Schema::connection()->getPdo()->exec("
-    CREATE TRIGGER prevent_feed_delete
-    BEFORE DELETE ON omsb_feeder_feeds
-    FOR EACH ROW
-    BEGIN
-        SIGNAL SQLSTATE '45000' 
-        SET MESSAGE_TEXT = 'Feed records are immutable and cannot be deleted';
-    END
-");
-```
-
+CREATE TRIGGER prevent_feed_delete
+BEFORE DELETE ON omsb_feeder_feeds
+FOR EACH ROW
+BEGIN
+    SIGNAL SQLSTATE '45000' 
+    SET MESSAGE_TEXT = 'Feed records are immutable and cannot be deleted';
+END;
 **Effort:** Medium  
 **Impact:** High (ensures true immutability)
 
