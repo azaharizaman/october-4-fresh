@@ -31,11 +31,27 @@ class PurchaseRequest extends Model
 {
     use \October\Rain\Database\Traits\Validation;
     use \October\Rain\Database\Traits\SoftDelete;
+    use \Omsb\Workflow\Traits\HasWorkflow;
 
     /**
      * @var string table name
      */
     public $table = 'omsb_procurement_purchase_requests';
+
+    /**
+     * Workflow configuration
+     */
+    protected $workflowDocumentType = 'purchase_request';
+    protected $workflowEligibleStatuses = ['draft'];
+    protected $workflowPendingStatus = 'submitted';
+    protected $workflowApprovedStatus = 'approved';
+    protected $workflowRejectedStatus = 'rejected';
+    
+    /**
+     * Allow total_amount to be updated during workflow (for automatic recalculation)
+     * This prevents ValidationException when line items are modified
+     */
+    protected $workflowAllowedFields = ['total_amount'];
 
     /**
      * @var array fillable fields
@@ -163,11 +179,8 @@ class PurchaseRequest extends Model
         'feeds' => [
             'Omsb\Feeder\Models\Feed',
             'name' => 'feedable'
-        ],
-        'workflow_instances' => [
-            'Omsb\Workflow\Models\WorkflowInstance',
-            'name' => 'workflowable'
         ]
+        // workflow_instances relationship is now provided by HasWorkflow trait
     ];
 
     /**
@@ -200,12 +213,15 @@ class PurchaseRequest extends Model
      */
     public function recalculateTotal(): void
     {
-        $total = $this->items()
-            ->sum('estimated_total_cost');
+        $total = $this->items()->sum('estimated_total_cost');
         
         if ($this->total_amount != $total) {
             $this->total_amount = $total;
-            $this->save();
+            // Use updateQuietly to avoid triggering events (prevents infinite loop)
+            // This bypasses the saving event and workflow protection
+            if ($this->exists) {
+                $this->updateQuietly(['total_amount' => $total]);
+            }
         }
     }
 

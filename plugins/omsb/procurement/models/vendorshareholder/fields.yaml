@@ -1,0 +1,53 @@
+# ===================================
+#  Form Field Definitions
+# ===================================
+
+fields:
+    name:
+        label: Shareholder/Director Name
+        type: text
+        required: true
+        span: left
+        comment: Full name of the shareholder or director
+    
+    ic_no:
+        label: IC/Passport Number
+        type: text
+        span: right
+        comment: Identification number or passport number
+    
+    designation:
+        label: Position/Role
+        type: text
+        span: left
+        comment: e.g., Director, CEO, Managing Director, Partner
+    
+    category:
+        label: Category
+        type: text
+        span: right
+        comment: Category classification (optional)
+    
+    share:
+        label: Share Percentage
+        type: text
+        span: left
+        comment: Share percentage or ownership amount (e.g., 50, 30%, etc.)
+
+tabs:
+    fields:
+        created_at:
+            label: Created At
+            type: datepicker
+            mode: datetime
+            disabled: true
+            span: left
+            tab: System Info
+        
+        updated_at:
+            label: Updated At
+            type: datepicker
+            mode: datetime
+            disabled: true
+            span: right
+            tab: System Info

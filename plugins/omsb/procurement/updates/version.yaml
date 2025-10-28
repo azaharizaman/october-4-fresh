@@ -14,4 +14,14 @@ v1.0.2:
     - create_goods_receipt_note_items_table.php
     - create_delivery_orders_table.php
     - create_delivery_order_items_table.php
+v1.0.3:
+    - 'Extended vendor schema for legacy data import and added shareholders'
+    - create_vendor_shareholders_table.php
+v1.0.4:
+    - 'Seed vendor data from TSI legacy system'
+    - seed_vendors_from_csv.php
+v1.0.5:
+    - 'Seed vendor shareholders data from TSI legacy system'
+    - seed_vendor_shareholders_from_csv.php
+
 

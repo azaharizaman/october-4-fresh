@@ -6,6 +6,490 @@ This document tracks significant architectural changes, business logic modificat
 
 ---
 
+## October 28, 2025 - Vendor Shareholders Relationship Implementation
+
+### 🏢 **Database Change: Vendor Shareholders/Directors Tracking**
+
+#### **Background**
+The procurement system needed to track vendor ownership structure, including shareholders, directors, and their respective ownership stakes. This information is critical for:
+- Vendor qualification and compliance (especially Bumiputera ownership verification)
+- Conflict of interest checks
+- Due diligence and vendor risk assessment
+- Regulatory reporting requirements
+- Corporate governance transparency
+
+#### **Changes Made**
+
+##### **1. New Table: Vendor Shareholders (`create_vendor_shareholders_table.php`)**
+
+```sql
+CREATE TABLE omsb_procurement_vendor_shareholders (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    vendor_id BIGINT UNSIGNED NOT NULL,           -- FK to vendors
+    name VARCHAR(255) NOT NULL,                   -- Shareholder/director name
+    ic_no VARCHAR(255) NULL,                      -- IC/Passport number
+    designation VARCHAR(255) NULL,                -- Position (Director, CEO, etc.)
+    category VARCHAR(255) NULL,                   -- Category classification
+    share VARCHAR(255) NULL,                      -- Share percentage or amount
+    created_at TIMESTAMP NULL,
+    updated_at TIMESTAMP NULL,
+    deleted_at TIMESTAMP NULL,                    -- Soft delete support
+    
+    FOREIGN KEY (vendor_id) REFERENCES omsb_procurement_vendors(id) ON DELETE CASCADE,
+    INDEX idx_shareholders_vendor_id (vendor_id),
+    INDEX idx_shareholders_name (name),
+    INDEX idx_shareholders_ic_no (ic_no),
+    INDEX idx_shareholders_deleted_at (deleted_at)
+);
+```
+
+##### **2. New Model: VendorShareholder (`VendorShareholder.php`)**
+
+**Key Features:**
+```php
+// Relationships
+$belongsTo = ['vendor' => [Vendor::class]];
+
+// Custom Accessors
+getDisplayNameAttribute() // "John Doe (DIRECTOR) - 50%"
+getFormattedShareAttribute() // "50%"
+
+// Utility Methods
+isCompany() // Detects if shareholder is company vs individual
+
+// Query Scopes
+scopeByVendor($vendorId)
+scopeByCategory($category)
+```
+
+##### **3. Vendor Model Enhancement**
+
+**Added hasMany Relationship:**
+```php
+public $hasMany = [
+    'shareholders' => [
+        VendorShareholder::class,
+        'key' => 'vendor_id'
+    ]
+];
+```
+
+##### **4. Backend UI Integration**
+
+**Vendors Controller:**
+- Implements `RelationController` behavior
+- Manages shareholders through relation interface
+
+**Relation Configuration (`config_relation.yaml`):**
+```yaml
+shareholders:
+    label: Shareholders/Directors
+    view:
+        list: $/omsb/procurement/models/vendorshareholder/columns.yaml
+        toolbarButtons: create|delete
+    manage:
+        form: $/omsb/procurement/models/vendorshareholder/fields.yaml
+```
+
+**UI Features:**
+- Add/edit/delete shareholders from vendor detail page
+- List view with name, IC, designation, share percentage
+- Form with validation for all fields
+
+##### **5. Data Import Seeder (`seed_vendor_shareholders_from_csv.php`)**
+
+**Purpose:** Import ~900 shareholder records from legacy TSI system
+
+**Key Features:**
+- **Vendor ID Mapping:** Maps legacy vendor IDs to new vendor codes
+  ```
+  Legacy vendor_id (1385) → Vendor code (VS900001) → New vendor record
+  ```
+- **Dual CSV Processing:**
+  1. Reads vendor CSV to build ID→code mapping
+  2. Reads shareholder CSV and maps to correct vendors
+- **Data Quality:**
+  - Skips soft-deleted records (deleted_at IS NOT NULL)
+  - Upsert logic (updates existing, creates new)
+  - Preserves original timestamps from legacy system
+- **Error Handling:**
+  - Reports missing vendor mappings
+  - Counts imported, skipped (deleted), and skipped (vendor not found)
+
+**Import Statistics (Expected):**
+```
+Total rows processed: ~918
+Shareholders imported/updated: ~700-800
+Skipped (deleted): ~100-200
+Skipped (vendor not found): Minimal (if vendor import successful)
+```
+
+#### **Business Logic Impact**
+
+##### **Vendor Qualification Workflows**
+```php
+// Verify Bumiputera ownership (requires >51% Malaysian shareholders)
+$malaysiaShareholders = $vendor->shareholders()
+    ->where('category', '1')
+    ->get();
+
+$totalMalaysianShare = $malaysiaShareholders->sum('share');
+
+if ($vendor->is_bumi && $totalMalaysianShare < 51) {
+    // Flag for review - claimed Bumi but ownership doesn't meet threshold
+}
+```
+
+##### **Conflict of Interest Checks**
+```php
+// Check if any shareholder is also a staff member
+$staffICs = Staff::pluck('ic_no');
+$conflictingShareholders = $vendor->shareholders()
+    ->whereIn('ic_no', $staffICs)
+    ->get();
+
+if ($conflictingShareholders->count() > 0) {
+    // Flag potential conflict of interest
+}
+```
+
+##### **Ownership Reports**
+```php
+// Generate ownership structure report
+$ownershipReport = $vendor->shareholders()
+    ->whereNull('deleted_at')
+    ->orderByRaw('CAST(share AS DECIMAL(10,2)) DESC')
+    ->get()
+    ->map(function($shareholder) {
+        return [
+            'name' => $shareholder->name,
+            'designation' => $shareholder->designation,
+            'share' => $shareholder->share . '%',
+            'type' => $shareholder->isCompany() ? 'Corporate' : 'Individual'
+        ];
+    });
+```
+
+##### **Corporate Shareholder Detection**
+```php
+// Identify vendors with corporate shareholders (potential group structures)
+$corporateShareholders = VendorShareholder::whereNull('deleted_at')
+    ->get()
+    ->filter(function($shareholder) {
+        return $shareholder->isCompany();
+    });
+
+// Cross-reference to detect vendor groups
+foreach ($corporateShareholders as $corpShareholder) {
+    $relatedVendor = Vendor::where('name', 'LIKE', '%' . $corpShareholder->name . '%')->first();
+    if ($relatedVendor) {
+        // Detected corporate group relationship
+    }
+}
+```
+
+#### **Migration Path**
+
+**Version Sequence:**
+1. **v1.0.2** - `create_vendors_table.php` (vendors created first)
+2. **v1.0.3** - `create_vendor_shareholders_table.php` (shareholders table)
+3. **v1.0.4** - `seed_vendors_from_csv.php` (seed vendors)
+4. **v1.0.5** - `seed_vendor_shareholders_from_csv.php` (seed shareholders)
+
+**Migration Commands:**
+```bash
+# Run all migrations and seeders in order
+php artisan plugin:refresh Omsb.Procurement
+
+# Verify shareholder import
+mysql -u root -p railwayfour -e "
+SELECT 
+    v.code, v.name, 
+    COUNT(s.id) as shareholder_count 
+FROM omsb_procurement_vendors v 
+LEFT JOIN omsb_procurement_vendor_shareholders s ON v.id = s.vendor_id 
+WHERE s.deleted_at IS NULL 
+GROUP BY v.id 
+HAVING shareholder_count > 0 
+ORDER BY shareholder_count DESC 
+LIMIT 10;
+"
+```
+
+#### **Data Quality Considerations**
+
+**IC Number Formats:**
+- Malaysian IC: `YYMMDD-SS-####` (e.g., `830206-13-5676`)
+- Passport: Variable format (e.g., `G24109480`)
+- Company Registration: May be blank or registration number
+
+**Share Values:**
+- Formats: Percentage (`70`), decimal (`7.5`), or empty
+- **Note:** May not sum to 100% (data quality issue in legacy system)
+
+**Designation Values:**
+- Common: DIRECTOR, CEO, MANAGING DIRECTOR, MANAGER, PARTNER, OWNER
+- Variable capitalization in legacy data
+
+**Category Values:**
+- `0` - Possibly foreign/corporate shareholder
+- `1` - Possibly Malaysian/individual shareholder
+- Empty - Unknown classification
+
+#### **Backward Compatibility**
+
+✅ **Fully Compatible:**
+- No changes to existing Vendor model fields or relationships
+- Shareholders are optional (vendors can have zero shareholders)
+- Existing vendor queries unaffected
+- Pure additive change (no breaking modifications)
+
+#### **Future Enhancements**
+
+1. **Share Validation:** Add business rule to validate shares sum to 100%
+2. **Historical Tracking:** Track shareholder changes over time (audit trail)
+3. **IC Validation:** Validate Malaysian IC format and checksum
+4. **Relationship Mapping:** Link related shareholders across vendors (detect groups)
+5. **Document Attachment:** Upload shareholding certificates/documents
+6. **Ownership Analysis Dashboard:** Visual ownership structure reports
+7. **Automated Compliance Checks:** Flag Bumi ownership mismatches
+8. **Shareholder Portal:** Allow shareholders to update their own information
+
+---
+
+## October 28, 2025 - Vendor Model Schema Extension for Legacy Data Migration
+
+### 📦 **Database Change: Vendor Table Schema Extension**
+
+#### **Background**
+The vendor management system needed to import historical vendor data from a legacy TSI procurement system. The existing vendor schema was minimal and didn't accommodate the rich vendor metadata from the legacy system, including:
+- Vendor classification (Bumiputera status, specialized vendors, precision vendors)
+- Tax/GST registration details
+- Credit management information
+- Detailed address and contact information
+- Business scope and service descriptions
+
+#### **Changes Made**
+
+##### **1. Procurement Vendor Migration (`create_vendors_table.php`)**
+
+**New Fields Added:**
+
+```sql
+-- Vendor identification and dates
++ incorporation_date DATE NULL              -- Date of company incorporation
++ sap_code VARCHAR NULL                     -- SAP system integration code
+
+-- Vendor classification flags
++ is_bumi BOOLEAN DEFAULT false             -- Bumiputera vendor status
++ type VARCHAR NULL                         -- Standard, Contractor, Specialized Vendor, etc.
++ category VARCHAR NULL                     -- Vendor category
++ is_specialized BOOLEAN DEFAULT false      -- Specialized vendor flag
++ is_precision BOOLEAN DEFAULT false        -- Precision vendor flag (high-accuracy requirements)
++ is_approved BOOLEAN DEFAULT false         -- Pre-approved vendor flag
+
+-- Tax/GST information (extended from single tax_number)
++ is_gst BOOLEAN DEFAULT false              -- GST registered flag
++ gst_number VARCHAR NULL                   -- GST registration number
++ gst_type VARCHAR NULL                     -- GST type (SR = Special Rate, etc.)
++ tax_number VARCHAR NULL                   -- Generic tax ID (kept for compatibility)
+
+-- International vendor support
++ is_foreign BOOLEAN DEFAULT false          -- Foreign vendor flag
++ country_id INT UNSIGNED NULL              -- Current country
++ origin_country_id INT UNSIGNED NULL       -- Origin/home country
+
+-- Enhanced contact information
++ designation VARCHAR NULL                  -- Contact person's job title
++ tel_no VARCHAR NULL                       -- Telephone number
++ fax_no VARCHAR NULL                       -- Fax number
++ hp_no VARCHAR NULL                        -- Mobile/HP number
++ email VARCHAR NULL                        -- General email (in addition to contact_email)
+
+-- Embedded address fields (in addition to address_id FK)
++ street VARCHAR NULL                       -- Street address
++ city VARCHAR NULL                         -- City
++ state_id INT UNSIGNED NULL                -- State/region
++ postcode VARCHAR NULL                     -- Postal code
+
+-- Business information
++ scope_of_work TEXT NULL                   -- Detailed scope of services/products
++ service VARCHAR NULL                      -- Service category/department
+
+-- Credit management
++ credit_limit DECIMAL(15,2) NULL           -- Credit limit amount
++ credit_terms VARCHAR NULL                 -- Credit payment terms
++ credit_updated_at TIMESTAMP NULL          -- Last credit review date
++ credit_review VARCHAR NULL                -- Credit review status
++ credit_remarks TEXT NULL                  -- Credit management notes
+
+-- Multi-company support
++ company_id INT UNSIGNED NULL              -- Company association (for multi-company setup)
+
+-- Status change
+~ status VARCHAR DEFAULT 'Active'           -- Changed from ENUM to VARCHAR for legacy compatibility
+```
+
+**Indexes Added:**
+```sql
++ INDEX idx_vendors_type (type)
++ INDEX idx_vendors_is_bumi (is_bumi)
++ INDEX idx_vendors_is_specialized (is_specialized)
++ INDEX idx_vendors_is_approved (is_approved)
++ INDEX idx_vendors_company_id (company_id)
+```
+
+##### **2. Vendor Model Updates (`Vendor.php`)**
+
+**Fillable Fields Extended:**
+- Added 33 new fillable fields to accommodate all CSV columns
+- Maintained backward compatibility with existing fields
+
+**Nullable Fields:**
+- Extended `$nullable` array to properly handle empty values from CSV import
+- Prevents "Incorrect integer value" errors for nullable foreign keys
+
+**Validation Rules Enhanced:**
+```php
++ 'incorporation_date' => 'nullable|date'
++ 'credit_limit' => 'nullable|numeric|min:0'
++ 'credit_updated_at' => 'nullable|date'
++ 'is_bumi' => 'boolean'
++ 'is_specialized' => 'boolean'
++ 'is_precision' => 'boolean'
++ 'is_approved' => 'boolean'
++ 'is_gst' => 'boolean'
++ 'is_foreign' => 'boolean'
+```
+
+**New Casts:**
+```php
++ 'is_bumi' => 'boolean'
++ 'is_specialized' => 'boolean'
++ 'is_precision' => 'boolean'
++ 'is_approved' => 'boolean'
++ 'is_gst' => 'boolean'
++ 'is_foreign' => 'boolean'
++ 'credit_limit' => 'decimal:2'
++ 'incorporation_date' => 'date'
++ 'credit_updated_at' => 'datetime'
+```
+
+**New Model Scopes:**
+```php
++ scopeBumi()           // Filter Bumiputera vendors only
++ scopeSpecialized()    // Filter specialized vendors only
++ scopeApproved()       // Filter pre-approved vendors only
++ scopeByType($type)    // Filter by vendor type
+```
+
+**Status Handling Update:**
+- Changed from hardcoded ENUM values (`active`, `inactive`, `blacklisted`)
+- Now uses VARCHAR to support legacy status values (`Active`, `Inactive`, `Blacklisted`, etc.)
+- Updated `isActive()` and `isBlacklisted()` methods to use case-insensitive comparison
+
+##### **3. CSV Import Seeder (`seed_vendors_from_csv.php`)**
+
+**Purpose:** Import 3,200+ vendor records from legacy TSI procurement system
+
+**Features:**
+- Reads CSV file: `raw_data/tsi_procurement_vendors_202510281231-procurement_vendors.csv`
+- Skips soft-deleted records (where `deleted_at IS NOT NULL`)
+- Preserves original timestamps from legacy system
+- Updates existing vendors by code (upsert logic)
+- Transaction-based import for data integrity
+- Comprehensive data parsing:
+  - Boolean conversion (0/1 to false/true)
+  - Date parsing (ISO format)
+  - Decimal parsing for credit limits
+  - Null handling for empty strings
+- Progress reporting with import statistics
+
+**Usage:**
+```bash
+php artisan db:seed --class="Omsb\Procurement\Updates\SeedVendorsFromCsv"
+```
+
+#### **Business Logic Impact**
+
+##### **Enhanced Vendor Classification**
+```php
+// Query Bumiputera vendors for government procurement preferences
+$bumiVendors = Vendor::bumi()->active()->get();
+
+// Find specialized vendors for complex medical equipment
+$specializedVendors = Vendor::specialized()
+    ->where('type', 'Specialized Vendor')
+    ->where('scope_of_work', 'LIKE', '%medical%')
+    ->get();
+
+// Filter contractors vs. standard vendors
+$contractors = Vendor::byType('Contractor')->get();
+$standardVendors = Vendor::byType('Standard Vendor')->get();
+```
+
+##### **Credit Management Integration**
+```php
+// Check vendor credit limits before PO approval
+if ($purchaseOrder->total_amount > $vendor->credit_limit) {
+    throw new ValidationException(['vendor' => 'PO amount exceeds vendor credit limit']);
+}
+
+// Track credit review dates
+if ($vendor->credit_updated_at < now()->subMonths(6)) {
+    // Flag for credit review
+}
+```
+
+##### **International Vendor Support**
+```php
+// Handle foreign vendors differently (currency, tax, shipping)
+if ($vendor->is_foreign) {
+    $po->currency_code = $vendor->country->currency_code;
+    $po->requires_customs_clearance = true;
+}
+```
+
+#### **Migration Path**
+
+1. **Backup existing vendor data** (if any)
+2. **Run updated migration:**
+   ```bash
+   php artisan plugin:refresh Omsb.Procurement
+   ```
+3. **Import legacy vendor data:**
+   ```bash
+   php artisan db:seed --class="Omsb\Procurement\Updates\SeedVendorsFromCsv"
+   ```
+4. **Verify import results:**
+   - Check import statistics in console output
+   - Validate vendor counts match expectations
+   - Spot-check vendor details for accuracy
+
+#### **Backward Compatibility**
+
+✅ **Fully Backward Compatible:**
+- All original fields retained (`code`, `name`, `registration_number`, `tax_number`, etc.)
+- Existing relationships unchanged (`address`, `purchase_orders`, `vendor_quotations`, `purchaseable_items`)
+- Original scopes preserved (`scopeActive`, `scopeByStatus`)
+- Existing validation rules maintained
+- `address_id` foreign key still supported for future address normalization
+
+**⚠️ Breaking Change:**
+- `status` field changed from `ENUM('active', 'inactive', 'blacklisted')` to `VARCHAR`
+- **Impact:** Any hardcoded status checks using exact case-sensitive strings may need updates
+- **Mitigation:** Model methods `isActive()` and `isBlacklisted()` now use case-insensitive comparison
+
+#### **Future Enhancements**
+
+1. **Address Normalization:** Create Address records for all vendors using embedded address fields, then populate `address_id`
+2. **Country/State Reference:** Link `country_id`, `origin_country_id`, and `state_id` to reference tables
+3. **Credit Management Module:** Build dedicated credit management workflow using `credit_*` fields
+4. **Vendor Portal:** Expose vendor profile for self-service updates using enhanced fields
+5. **Vendor Performance Tracking:** Leverage vendor metadata for supplier scorecarding
+
+---
+
 ## October 27, 2025 - Approval System Consolidation
 
 ### 🏗️ **Architecture Change: MLAS Integration into Organization Plugin**

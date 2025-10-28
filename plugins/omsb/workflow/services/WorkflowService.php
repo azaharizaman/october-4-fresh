@@ -1,8 +1,8 @@
 <?php namespace Omsb\Workflow\Services;
 
-use Omsb\Workflow\Models\WorkflowInstance;
-use Omsb\Organization\Models\Approval;
 use Backend\Facades\BackendAuth;
+use Omsb\Organization\Models\Approval;
+use Omsb\Workflow\Models\WorkflowInstance;
 
 /**
  * WorkflowService
@@ -47,8 +47,8 @@ class WorkflowService
             'workflow_code' => $workflowCode,
             'status' => 'pending',
             'document_type' => $documentType,
-            'documentable_type' => get_class($document),
-            'documentable_id' => $document->id,
+            'workflowable_type' => get_class($document),
+            'workflowable_id' => $document->id,
             'document_amount' => $this->getDocumentAmount($document),
             'current_step' => $this->getStepName($firstRule),
             'total_steps_required' => count($approvalPath),

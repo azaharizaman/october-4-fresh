@@ -28,7 +28,7 @@ return new class extends Migration
             
             // Document being processed
             $table->string('document_type'); // e.g., 'purchase_request', 'stock_adjustment'
-            $table->morphs('documentable'); // Links to the actual document (morphTo)
+            $table->morphs('workflowable'); // Links to the actual document (morphTo)
             $table->decimal('document_amount', 15, 2)->nullable(); // Amount for approval routing
             
             // Workflow progress tracking
@@ -80,7 +80,7 @@ return new class extends Migration
             // Indexes for performance
             $table->index('workflow_code', 'idx_workflow_instances_code');
             $table->index('status', 'idx_workflow_instances_status');
-            $table->index(['document_type', 'documentable_type'], 'idx_workflow_instances_document');
+            $table->index(['document_type', 'workflowable_type'], 'idx_workflow_instances_document');
             $table->index('current_step', 'idx_workflow_instances_step');
             $table->index(['due_at', 'is_overdue'], 'idx_workflow_instances_due');
             $table->index(['started_at', 'completed_at'], 'idx_workflow_instances_timing');

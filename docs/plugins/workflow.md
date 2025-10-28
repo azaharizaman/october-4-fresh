@@ -328,7 +328,7 @@ Starts an approval workflow for any document.
 
 **Example**:
 ```php
-use Omsb\Workflow\Services\WorkflowService;
+use Omsb\Feeder\Models\Feed;
 
 $workflowService = new WorkflowService();
 
@@ -429,7 +429,7 @@ Records an approval action for the current workflow step.
 
 **Example**:
 ```php
-use Omsb\Workflow\Services\WorkflowActionService;
+use Omsb\Organization\Models\Staff;
 
 $actionService = new WorkflowActionService();
 
@@ -589,7 +589,7 @@ Determines the complete approval path for a document.
 
 **Example**:
 ```php
-use Omsb\Workflow\Services\ApprovalPathService;
+use Omsb\Organization\Models\Approval;
 
 $pathService = new ApprovalPathService();
 
@@ -714,7 +714,7 @@ $rules = Approval::where('document_type', 'purchase_order')
 Workflow validates approvers against organizational hierarchy:
 
 ```php
-use Omsb\Organization\Models\Staff;
+use Omsb\Procurement\Models\PurchaseOrder;
 
 // Check if approver is in hierarchy above creator
 $creator = Staff::find($document->created_by);
@@ -752,7 +752,7 @@ Approval::where('site_id', $document->site_id)
 
 ```php
 // In PurchaseOrderController
-use Omsb\Workflow\Services\WorkflowService;
+use Omsb\Workflow\Models\WorkflowInstance;
 
 public function onApprove()
 {
@@ -850,7 +850,7 @@ $document->update(['status' => 'rejected']);
 All workflow actions should be logged to the Feeder plugin for activity feeds:
 
 ```php
-use Omsb\Feeder\Models\Feed;
+use Omsb\Workflow\Services\WorkflowService;
 
 // After approval action
 Feed::create([
@@ -910,8 +910,8 @@ foreach ($preview as $step) {
 #### 3. Record Approval
 
 ```php
-use Omsb\Workflow\Services\WorkflowActionService;
-use Omsb\Workflow\Models\WorkflowInstance;
+use Omsb\Workflow\Services\WorkflowService;
+use Omsb\Workflow\Services\WorkflowService;
 
 $actionService = new WorkflowActionService();
 
@@ -1046,8 +1046,8 @@ Event::listen('workflow.instance.completed', function($workflow) {
 ### Example 1: Basic Purchase Order Workflow
 
 ```php
-use Omsb\Procurement\Models\PurchaseOrder;
-use Omsb\Workflow\Services\WorkflowService;
+use Omsb\Workflow\Services\ApprovalPathService;
+use Omsb\Workflow\Services\WorkflowActionService;
 use Omsb\Workflow\Services\WorkflowActionService;
 
 // 1. Create Purchase Order
@@ -1096,7 +1096,7 @@ if ($result === 'completed') {
 // Organization has rule: "3 out of 5 department heads must approve"
 
 // Setup approval rule (in Organization plugin)
-use Omsb\Organization\Models\Approval;
+use Omsb\Workflow\Services\WorkflowActionService;
 
 $rule = Approval::create([
     'code' => 'PO_HQ_10K_TO_50K',

@@ -103,7 +103,7 @@ class WorkflowInstance extends Model
      * @var array morphTo relationships
      */
     public $morphTo = [
-        'documentable' => []
+        'workflowable' => []
     ];
 
     /**

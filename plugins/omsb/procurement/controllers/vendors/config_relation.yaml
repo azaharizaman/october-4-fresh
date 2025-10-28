@@ -1,0 +1,35 @@
+# ===================================
+#  Relation Behavior Config
+# ===================================
+
+# Shareholders relation
+shareholders:
+    label: Shareholders/Directors
+    view:
+        list: $/omsb/procurement/models/vendorshareholder/columns.yaml
+        toolbarButtons: create|delete
+    manage:
+        form: $/omsb/procurement/models/vendorshareholder/fields.yaml
+        recordsPerPage: 10
+    
+# Purchase Orders relation
+purchase_orders:
+    label: Purchase Orders
+    view:
+        list: $/omsb/procurement/models/purchaseorder/columns.yaml
+        toolbarButtons: create|delete
+        recordUrl: omsb/procurement/purchaseorders/update/:id
+    manage:
+        form: $/omsb/procurement/models/purchaseorder/fields.yaml
+        recordsPerPage: 10
+
+# Vendor Quotations relation
+vendor_quotations:
+    label: Vendor Quotations
+    view:
+        list: $/omsb/procurement/models/vendorquotation/columns.yaml
+        toolbarButtons: create|delete
+        recordUrl: omsb/procurement/vendorquotations/update/:id
+    manage:
+        form: $/omsb/procurement/models/vendorquotation/fields.yaml
+        recordsPerPage: 10

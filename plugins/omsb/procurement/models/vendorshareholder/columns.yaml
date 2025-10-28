@@ -1,0 +1,37 @@
+# ===================================
+#  List Column Definitions
+# ===================================
+
+columns:
+    name:
+        label: Name
+        type: text
+        searchable: true
+        sortable: true
+    
+    ic_no:
+        label: IC/Passport No
+        type: text
+        searchable: true
+        sortable: true
+    
+    designation:
+        label: Position/Role
+        type: text
+        searchable: true
+        sortable: true
+    
+    category:
+        label: Category
+        type: text
+        sortable: true
+    
+    share:
+        label: Share (%)
+        type: text
+        sortable: true
+    
+    created_at:
+        label: Created
+        type: datetime
+        sortable: true

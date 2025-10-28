@@ -269,7 +269,7 @@ class WorkflowActionService
      */
     protected function updateDocumentStatus(WorkflowInstance $workflow, $newStatus)
     {
-        $document = $workflow->documentable;
+        $document = $workflow->workflowable;
         
         if ($document && is_object($document) && method_exists($document, 'update')) {
             $document->update(['status' => $newStatus]);
