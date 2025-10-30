@@ -14,9 +14,11 @@ use Carbon\Carbon;
  * @property int $id
  * @property int $purchaseable_item_id Reference to master item catalog
  * @property int $warehouse_id Warehouse location
- * @property int $default_uom_id HQ's preferred UOM
- * @property int $primary_inventory_uom_id Warehouse's main UOM
- * @property float $quantity_on_hand Current stock level
+ * @property int|null $base_uom_id Base UOM for quantity_on_hand (ALWAYS in base units)
+ * @property int|null $display_uom_id Warehouse preference for displaying quantities
+ * @property int $default_uom_id HQ's preferred UOM (legacy)
+ * @property int $primary_inventory_uom_id Warehouse's main UOM (legacy)
+ * @property float $quantity_on_hand Current stock level (ALWAYS in base UOM)
  * @property float $quantity_reserved Allocated but not issued
  * @property float $quantity_available Computed (QoH - Reserved)
  * @property float $minimum_stock_level Reorder point
@@ -67,6 +69,8 @@ class WarehouseItem extends Model
     protected $fillable = [
         'purchaseable_item_id',
         'warehouse_id',
+        'base_uom_id',
+        'display_uom_id',
         'default_uom_id',
         'primary_inventory_uom_id',
         'quantity_on_hand',
@@ -87,6 +91,8 @@ class WarehouseItem extends Model
      * @var array attributes that should be converted to null when empty
      */
     protected $nullable = [
+        'base_uom_id',
+        'display_uom_id',
         'maximum_stock_level',
         'barcode',
         'bin_location',
@@ -100,6 +106,8 @@ class WarehouseItem extends Model
     public $rules = [
         'purchaseable_item_id' => 'required|integer|exists:omsb_procurement_purchaseable_items,id',
         'warehouse_id' => 'required|integer|exists:omsb_inventory_warehouses,id',
+        'base_uom_id' => 'nullable|integer|exists:omsb_organization_unit_of_measures,id',
+        'display_uom_id' => 'nullable|integer|exists:omsb_organization_unit_of_measures,id',
         'default_uom_id' => 'required|integer|exists:omsb_inventory_unit_of_measures,id',
         'primary_inventory_uom_id' => 'required|integer|exists:omsb_inventory_unit_of_measures,id',
         'quantity_on_hand' => 'numeric|min:0',
@@ -162,6 +170,14 @@ class WarehouseItem extends Model
         ],
         'warehouse' => [
             Warehouse::class
+        ],
+        'base_uom' => [
+            'Omsb\Organization\Models\UnitOfMeasure',
+            'key' => 'base_uom_id'
+        ],
+        'display_uom' => [
+            'Omsb\Organization\Models\UnitOfMeasure',
+            'key' => 'display_uom_id'
         ],
         'default_uom' => [
             UnitOfMeasure::class,
@@ -453,6 +469,32 @@ class WarehouseItem extends Model
     public function getPrimaryInventoryUomIdOptions(): array
     {
         return UnitOfMeasure::active()
+            ->orderBy('code')
+            ->pluck('display_name', 'id')
+            ->toArray();
+    }
+
+    /**
+     * Get base UOM options for dropdown (from Organization plugin)
+     */
+    public function getBaseUomIdOptions(): array
+    {
+        return \Omsb\Organization\Models\UnitOfMeasure::where('is_active', true)
+            ->where('is_approved', true)
+            ->where('for_inventory', true)
+            ->orderBy('code')
+            ->pluck('display_name', 'id')
+            ->toArray();
+    }
+
+    /**
+     * Get display UOM options for dropdown (from Organization plugin)
+     */
+    public function getDisplayUomIdOptions(): array
+    {
+        return \Omsb\Organization\Models\UnitOfMeasure::where('is_active', true)
+            ->where('is_approved', true)
+            ->where('for_inventory', true)
             ->orderBy('code')
             ->pluck('display_name', 'id')
             ->toArray();

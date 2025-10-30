@@ -15,7 +15,9 @@ use ValidationException;
  * @property string $name Item name
  * @property string|null $description Item description
  * @property string|null $barcode Barcode
- * @property string $unit_of_measure Unit of measure
+ * @property string $unit_of_measure Unit of measure (legacy, use base_uom_id)
+ * @property int|null $base_uom_id Base UOM for normalization (from Organization plugin)
+ * @property int|null $purchase_uom_id Preferred purchase UOM
  * @property bool $is_inventory_item Whether item is tracked in inventory
  * @property string $item_type Asset classification (consumable, equipment, spare_part, asset, service, other)
  * @property float|null $standard_cost Standard cost
@@ -65,6 +67,8 @@ class PurchaseableItem extends Model
         'description',
         'barcode',
         'unit_of_measure',
+        'base_uom_id',
+        'purchase_uom_id',
         'is_inventory_item',
         'item_type',
         'standard_cost',
@@ -89,6 +93,8 @@ class PurchaseableItem extends Model
     protected $nullable = [
         'description',
         'barcode',
+        'base_uom_id',
+        'purchase_uom_id',
         'standard_cost',
         'last_purchase_cost',
         'last_purchase_date',
@@ -110,6 +116,8 @@ class PurchaseableItem extends Model
         'code' => 'required|max:255|unique:omsb_procurement_purchaseable_items,code',
         'name' => 'required|max:255',
         'unit_of_measure' => 'required|max:255',
+        'base_uom_id' => 'nullable|integer|exists:omsb_organization_unit_of_measures,id',
+        'purchase_uom_id' => 'nullable|integer|exists:omsb_organization_unit_of_measures,id',
         'is_inventory_item' => 'required|boolean',
         'item_type' => 'required|in:consumable,equipment,spare_part,asset,service,other',
         'service_code' => 'nullable|max:10',
@@ -164,6 +172,14 @@ class PurchaseableItem extends Model
     public $belongsTo = [
         'item_category' => [
             ItemCategory::class
+        ],
+        'base_uom' => [
+            'Omsb\Organization\Models\UnitOfMeasure',
+            'key' => 'base_uom_id'
+        ],
+        'purchase_uom' => [
+            'Omsb\Organization\Models\UnitOfMeasure',
+            'key' => 'purchase_uom_id'
         ],
         'gl_account' => [
             'Omsb\Organization\Models\GlAccount'
@@ -371,6 +387,31 @@ class PurchaseableItem extends Model
     {
         return Vendor::active()
             ->orderBy('name')
+            ->pluck('display_name', 'id')
+            ->toArray();
+    }
+
+    /**
+     * Get base UOM options for dropdown
+     */
+    public function getBaseUomIdOptions(): array
+    {
+        return \Omsb\Organization\Models\UnitOfMeasure::where('is_active', true)
+            ->where('is_approved', true)
+            ->orderBy('code')
+            ->pluck('display_name', 'id')
+            ->toArray();
+    }
+
+    /**
+     * Get purchase UOM options for dropdown
+     */
+    public function getPurchaseUomIdOptions(): array
+    {
+        return \Omsb\Organization\Models\UnitOfMeasure::where('is_active', true)
+            ->where('is_approved', true)
+            ->where('for_purchase', true)
+            ->orderBy('code')
             ->pluck('display_name', 'id')
             ->toArray();
     }
